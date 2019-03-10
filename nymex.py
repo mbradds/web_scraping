@@ -116,7 +116,7 @@ def nymex_options(url,trade_date = trade_date_id):
     #date dict contains all of the data options for the current day
     return(date_dict,driver)
 
-#%%[Id] INT NOT NULL PRIMARY KEY, -- Primary Key column
+#%%
 
 def nymex_scrape(date_dict,driver):
         
