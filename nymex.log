@@ -1,0 +1,58 @@
+2019-03-09 16:39:52,038 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 16:39:52.038529on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 16:39:52,038 - __main__ - INFO - fist scrape on 2019-03-09 16:39:52.038757
+NoneType: None
+2019-03-09 16:51:44,769 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 16:51:44.769298on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 16:51:44,769 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 16:51:44.769298on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 16:51:44,785 - __main__ - INFO - no new data at 2019-03-09 16:51:44.785588
+2019-03-09 16:51:44,785 - __main__ - INFO - no new data at 2019-03-09 16:51:44.785588
+2019-03-09 18:29:30,763 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 18:29:30.763509on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 18:29:30,785 - __main__ - INFO - no new data at 2019-03-09 18:29:30.785629
+2019-03-09 18:30:22,134 - __main__ - INFO - Cant connect to website at 2019-03-09 18:30:22.134566
+Traceback (most recent call last):
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/connectionpool.py", line 377, in _make_request
+    httplib_response = conn.getresponse(buffering=True)
+TypeError: getresponse() got an unexpected keyword argument 'buffering'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/grant/Documents/web_scraping/nymex.py", line 93, in nymex_options
+    driver.get(url)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/selenium/webdriver/remote/webdriver.py", line 333, in get
+    self.execute(Command.GET, {'url': url})
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/selenium/webdriver/remote/webdriver.py", line 319, in execute
+    response = self.command_executor.execute(driver_command, params)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/selenium/webdriver/remote/remote_connection.py", line 374, in execute
+    return self._request(command_info[0], url, body=data)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/selenium/webdriver/remote/remote_connection.py", line 397, in _request
+    resp = self._conn.request(method, url, body=body, headers=headers)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/request.py", line 72, in request
+    **urlopen_kw)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/request.py", line 150, in request_encode_body
+    return self.urlopen(method, url, **extra_kw)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/poolmanager.py", line 323, in urlopen
+    response = conn.urlopen(method, u.request_uri, **kw)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/connectionpool.py", line 600, in urlopen
+    chunked=chunked)
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/site-packages/urllib3/connectionpool.py", line 380, in _make_request
+    httplib_response = conn.getresponse()
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/http/client.py", line 1321, in getresponse
+    response.begin()
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/http/client.py", line 296, in begin
+    version, status, reason = self._read_status()
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/http/client.py", line 257, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/home/grant/anaconda3/envs/scraping_env/lib/python3.7/socket.py", line 589, in readinto
+    return self._sock.recv_into(b)
+KeyboardInterrupt
+2019-03-09 18:31:58,477 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 18:31:58.477005on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 18:31:58,491 - __main__ - INFO - no new data at 2019-03-09 18:31:58.491659
+2019-03-09 18:35:35,979 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 18:35:35.979394on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 18:35:35,994 - __main__ - INFO - no new data at 2019-03-09 18:35:35.994151
+2019-03-09 18:38:38,833 - __main__ - INFO - scraped df: Friday, 08 Mar 2019 (Final)
+2019-03-09 18:38:41,122 - __main__ - INFO - scraped df: Thursday, 07 Mar 2019 (Final)
+2019-03-09 18:38:43,394 - __main__ - INFO - scraped df: Wednesday, 06 Mar 2019 (Final)
+2019-03-09 18:38:45,653 - __main__ - INFO - scraped df: Tuesday, 05 Mar 2019 (Final)
+2019-03-09 18:38:47,918 - __main__ - INFO - scraped df: Monday, 04 Mar 2019 (Final)
+2019-03-09 18:38:47,967 - __main__ - INFO - successfully scraped the CME Website at 2019-03-09 18:38:47.967036on /home/grant/anaconda3/envs/scraping_env/bin/python
+2019-03-09 18:38:47,983 - __main__ - INFO - no new data at 2019-03-09 18:38:47.983302
