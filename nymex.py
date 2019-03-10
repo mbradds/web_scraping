@@ -48,7 +48,6 @@ connection=engine.connect()
 
 #%%
 
-
 #helper functions
 #return all text between two custom characters
 def brackets(text,l,r):
