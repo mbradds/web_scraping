@@ -71,7 +71,6 @@ class scrape:
             
         return(driver)
         
-
 #%%
 #helper functions
 
@@ -193,9 +192,9 @@ def insert_csv(df, csv_path):
             with open(csv_path, 'a') as f:
                 rows_added = str(not_in_csv.shape[0])
                 not_in_csv.to_csv(f, header=False,index=False)
-                logging.info('added '+str(rows_added)+' new rows at ' +str(datetime.datetime.now()))
+                logging.info('added '+str(rows_added)+' new rows to csv')
         else:   
-            logger.info('no new data at '+str(datetime.datetime.now()))
+            logger.info('no new csv data')
     else:
         #if the file does not exists, then save it and wait for the next day
         logger.info('fist scrape on ' +str(datetime.datetime.now()),exc_info=True)
@@ -216,9 +215,13 @@ def insert_database(df,connection):
         nymex_db['Low'] = pd.to_numeric(nymex_db['Low'],errors='coerce')
         nymex_db['Last'] = pd.to_numeric(nymex_db['Last'],errors='coerce')
         not_in_db = return_not_in_csv(df1=nymex_db,df2=df)
-        not_in_db.to_sql(sql_table, connection, if_exists='replace', index=False,chunksize=100)
-        rows_added = str(not_in_db.shape[0])
-        logging.info('added '+str(rows_added)+' new rows to database at ' +str(datetime.datetime.now()))
+        
+        if not not_in_db.empty:
+            rows_added = str(not_in_db.shape[0])
+            not_in_db.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
+            logging.info('added '+str(rows_added)+' new rows to database')
+        else:
+            logger.info('no new database data')
 
     except:
         #no rows are returned (the table is empty)
@@ -241,7 +244,7 @@ scrape_df = nymex_scrape(options,driver)
 try:
     insert_csv(scrape_df,data_file)
     insert_database(scrape_df,connection)
-    logging.info('successfully added all data')
+
 except:
     logging.info('error adding new data to csv or db')
     
