@@ -38,7 +38,6 @@ class scrape:
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
         
         try:
-            
             with open(os.path.join(__location__,'database.json')) as f:
                 config = json.load(f)
             
@@ -51,7 +50,6 @@ class scrape:
             logger.info('error with database config file ',exc_info=True)
         
         try:
-            
             engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
             connection=engine.connect()
             logger.info('connected to database ',exc_info=True)
@@ -106,7 +104,6 @@ def nymex_options(url,driver,date_id = 'cmeTradeDate'):
               '11':'Nov',
               '12':'Dec'}
     
-
     try:
         driver.get(url)
         date_selections = Select(driver.find_element_by_id(date_id)).options
@@ -119,7 +116,6 @@ def nymex_options(url,driver,date_id = 'cmeTradeDate'):
 
     date_dict = {}
     try:
-        
         for i,date in enumerate(date_list):
             x = brackets(date,',','(')
             x = x.strip()
@@ -154,11 +150,11 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
             df['Settlement'] = brackets(str(key),'(',')')
             data.append(df)
             logger.info('scraped df: '+str(key))
+            
     except:
         logger.info('cant gather the source data, or cant build the dataframe at' +str(datetime.datetime.now()),exc_info=True)
         
     try:
-        
         df = pd.concat(data, axis=0, sort=False, ignore_index=True)
         df['Trade Date'] = df['Trade Date'].astype('datetime64[ns]')
         df['Open'] = pd.to_numeric(df['Open'],errors='coerce')
@@ -203,7 +199,6 @@ def insert_csv(df, csv_path):
     
 #%%
 #insert new data to database
-
 def insert_database(df,connection):
     sql_table = 'nymex'
     try:
@@ -228,8 +223,7 @@ def insert_database(df,connection):
         logging.info('database query or insert error')
     
 #%%    
-# main
-        
+# main   
 data_file = 'nymex.csv'
 direc = r'/home/grant/Documents/web_scraping/nymex_prices'
 driver_path = r'/home/grant/geckodriver'
