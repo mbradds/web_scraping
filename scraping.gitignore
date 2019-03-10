@@ -1,0 +1,3 @@
+*.log
+*.json
+check_default_database.sql
