@@ -25,13 +25,15 @@ class scrape:
         os.chdir(directory)
     
     def scrape_logger(logger_name):
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.INFO)
-        handler = logging.FileHandler(logger_name)
-        handler.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        name = logger_name.replace('.log','')
+        logger = logging.getLogger(name)
+        if not logger.handlers:
+            logger.propagate = False
+            logger.setLevel(logging.INFO)
+            handler = logging.FileHandler(logger_name)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
         return(logger)
     
     def scrape_database(config_file,logger):
@@ -53,10 +55,10 @@ class scrape:
             engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
             connection=engine.connect()
             logger.info('connected to database ',exc_info=True)
+            return(connection)
         except:
             logger.info('error with database connection ',exc_info=True)
             
-        return(connection)
     
     def scrape_driver(driver_path, headless = False):
         try:
@@ -64,10 +66,10 @@ class scrape:
             options.headless = headless
             driver = webdriver.Firefox(options=options, executable_path=driver_path)
             logger.info('successfully created the web driver ',exc_info=True)
+            return(driver)
         except:
             logger.info('error creating the web scraper ',exc_info=True)
             
-        return(driver)
         
 #%%
 #helper functions
@@ -127,7 +129,7 @@ def nymex_options(url,driver,date_id = 'cmeTradeDate'):
             full_date = str(m)+'/'+str(x[0])+'/'+str(x[2])
             date_dict.update({date:full_date})
     except:
-        logger.info('cant create the date used for selection at '+str(datetime.datetime.now()),exc_info=True)
+        logger.info('cant create the date used for selection at ',exc_info=True)
     
     #date dict contains all of the data options for the current day
     return(date_dict,driver) #pass the driver to the data scraper
@@ -149,10 +151,11 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
             df['Trade Date'] = value
             df['Settlement'] = brackets(str(key),'(',')')
             data.append(df)
-            logger.info('scraped df: '+str(key))
+            rows_added = str(df.shape[0])
+            logger.info('scraped df: '+str(key)+' '+str(rows_added)+' rows')
             
     except:
-        logger.info('cant gather the source data, or cant build the dataframe at' +str(datetime.datetime.now()),exc_info=True)
+        logger.info('cant gather the source data, or cant build the dataframe at ', exc_info=True)
         
     try:
         df = pd.concat(data, axis=0, sort=False, ignore_index=True)
@@ -168,9 +171,9 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
         df['Month'] = [m.replace(' ','_') for m in df['Month']]
     
     except:
-        logger.info('cant concatentate the dataframe at' +str(datetime.datetime.now()),exc_info=True)
+        logger.info('cant concatentate the dataframe at ' ,exc_info=True)
      
-    logger.info('successfully scraped the CME Website at'+' '+str(datetime.datetime.now())+'on '+str(sys.executable))
+    logger.info('successfully scraped the CME Website at'+' on '+str(sys.executable))
     return(df)
 
 #%%
@@ -188,7 +191,7 @@ def insert_csv(df, csv_path):
             with open(csv_path, 'a') as f:
                 rows_added = str(not_in_csv.shape[0])
                 not_in_csv.to_csv(f, header=False,index=False)
-                logging.info('added '+str(rows_added)+' new rows to csv')
+            logger.info('added '+str(rows_added)+' new rows to csv')
         else:   
             logger.info('no new csv data')
     else:
@@ -214,7 +217,7 @@ def insert_database(df,connection):
         if not not_in_db.empty:
             rows_added = str(not_in_db.shape[0])
             not_in_db.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
-            logging.info('added '+str(rows_added)+' new rows to database')
+            logger.info('added '+str(rows_added)+' new rows to database')
         else:
             logger.info('no new database data')
 
