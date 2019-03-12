@@ -302,10 +302,16 @@ email = dob_config[0]['dob_email']
 password = dob_config[0]['dob_password'] 
 
 #%%
-driver = login(driver,email = email, pword = password)
-dates = date_list()
-links = link_list(dates)
-oil = dob_dataframe(links,driver)
+try:
+    driver = login(driver,email = email, pword = password)
+    dates = date_list()
+    links = link_list(dates)
+    oil = dob_dataframe(links,driver)
+except:
+    None #add errors to logger
+finally:
+    driver.close()
+    connection.close()
 #%%
 
 
