@@ -262,12 +262,11 @@ def date_list(date_string = '2018-07-06'):
 
     return(date_list)
 #%%    
-
 def link_list(date_list):
-    base_link = 'https://www.dailyoilbulletin.com/report/YYYY/MM/DD/selected-oil-and-gas-prices/'
     replace_list = ['YYYY','MM','DD']
     all_links = []
     for date in date_list:
+        base_link = 'https://www.dailyoilbulletin.com/report/YYYY/MM/DD/selected-oil-and-gas-prices/'
         d = [str(date.year),str(date.month),str(date.day)]
         for old, new in zip(replace_list,d):
             base_link = base_link.replace(old,new)
@@ -282,6 +281,7 @@ def dob_dataframe(all_links,driver):
     for link in all_links:
         try:
             df = get_table(link,driver)
+            print(df.head())
             oil_data.append(df)
             logger.info('got '+str(link))
         except:
@@ -301,17 +301,12 @@ dob_config = scrape.dob_login('database.json',logger)
 email = dob_config[0]['dob_email']
 password = dob_config[0]['dob_password'] 
 
-
+#%%
 driver = login(driver,email = email, pword = password)
 dates = date_list()
 links = link_list(dates)
 oil = dob_dataframe(links,driver)
-
 #%%
-
-
-#%%
-
 
 
 
