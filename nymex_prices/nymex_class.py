@@ -233,7 +233,7 @@ driver_path = r'/home/grant/geckodriver'
 scrape(directory = direc)        
 logger = scrape.scrape_logger('nymex_class.log') 
 connection = scrape.scrape_database('database.json',logger)
-driver = scrape.scrape_driver(driver_path = driver_path, headless = False)        
+driver = scrape.scrape_driver(driver_path = driver_path, headless = True)        
 
 url = 'https://www.cmegroup.com/trading/energy/crude-oil/west-texas-intermediate-wti-crude-oil-calendar-swap-futures_quotes_settlements_futures.html'
 options,driver = nymex_options(url,driver)
