@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
+
 def brackets(text,l,r):
     if text.find(str(l)) != -1 and text.find(str(r)) != -1:
         return(text[text.find(str(l))+1:text.find(str(r))])
@@ -22,7 +23,29 @@ def ieso_links(url):
             l = l.replace('"','')
             link_list.append(l)
     return(link_list)
+
+def get_urls(extension_list,url):
+    #need to get the last word of the url for the csv donload link
+    download_links = []
+    base_url = 'http://reports.ieso.ca/public/'
+    url_split = url.split('/')
+    lis = [x for x in url_split if x]
+    last_word = lis[-1]
+    link = base_url+last_word+'/'
     
+    #add the extension to the base link
+    for e in extension_list:
+        download_links.append(link+e)
+    
+    return(download_links)
+
+#%%    
 url = 'http://reports.ieso.ca/public/Demand/'
-l = ieso_links(url)
-l
+extension_list = ieso_links(url)
+download_links = get_urls(extension_list, url)
+
+print(download_links)
+#%%
+
+
+#%%
