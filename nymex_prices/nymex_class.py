@@ -58,17 +58,33 @@ class scrape:
             return(connection)
         except:
             logger.info('error with database connection ',exc_info=True)
+            return(None)
             
     
-    def scrape_driver(driver_path, headless = False):
-        try:
-            options = Options()
-            options.headless = headless
-            driver = webdriver.Firefox(options=options, executable_path=driver_path)
-            logger.info('successfully created the web driver ',exc_info=True)
-            return(driver)
-        except:
-            logger.info('error creating the web scraper ',exc_info=True)
+    def scrape_driver(driver_path, browser, headless = True):
+        if browser == 'Firefox':
+        
+            try:
+                options = Options()
+                options.headless = headless
+                driver = webdriver.Firefox(options=options, executable_path=driver_path)
+                logger.info('successfully created the web driver ',exc_info=True)
+                return(driver)
+            except:
+                logger.info('error creating the firefox web scraper ',exc_info=True)
+        else:
+        
+            try:
+                chromeOptions = webdriver.ChromeOptions()
+                if headless:
+                    chromeOptions.add_argument('headless')
+                driver = webdriver.Chrome(options=chromeOptions, executable_path=driver_path)
+                logger.info('successfully created the web driver')
+                return(driver)
+            except:
+                logger.info('error creating the  chrome web scraper ',exc_info=True)
+                return(None)
+
             
         
 #%%
@@ -233,7 +249,7 @@ driver_path = r'/home/grant/geckodriver'
 scrape(directory = direc)        
 logger = scrape.scrape_logger('nymex_class.log') 
 connection = scrape.scrape_database('database.json',logger)
-driver = scrape.scrape_driver(driver_path = driver_path, headless = True)        
+driver = scrape.scrape_driver(driver_path = driver_path,browser = 'Firefox', headless = True)        
 
 url = 'https://www.cmegroup.com/trading/energy/crude-oil/west-texas-intermediate-wti-crude-oil-calendar-swap-futures_quotes_settlements_futures.html'
 options,driver = nymex_options(url,driver)

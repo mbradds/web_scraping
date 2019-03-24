@@ -4,12 +4,15 @@ import requests
 from bs4 import BeautifulSoup
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
+#helper functions
 
 def brackets(text,l,r):
     if text.find(str(l)) != -1 and text.find(str(r)) != -1:
         return(text[text.find(str(l))+1:text.find(str(r))])
     else:
         return('')
+
+# end helper functions
 
 def ieso_links(url):
     r = requests.get(url, allow_redirects=True, stream=True, headers=headers)

@@ -1,119 +1,21 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 11 14:55:45 2019
-
-@author: mossgran
-"""
-import numpy
-import selenium
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-import requests
-import io
 import pandas as pd
 import os
 import re
 import datetime
 import numpy as np
 from bs4 import BeautifulSoup
-import urllib
-import lxml
 import time
 from datetime import datetime, timedelta
 import logging
+import json
+import sys
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-#headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'}
-
-
-class scrape:
-    
-    
-    def __init__(self,directory):
-        self.directory = directory
-        os.chdir(directory)
+  
+#custom module for setting up scraper
+import scraping as sc
+#%%   
         
-    def dob_login(config_file,logger):
-        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
-        
-        try:
-            with open(os.path.join(__location__,'database.json')) as f:
-                config = json.load(f)
-            
-            dob_password = config[0]['dob_password']
-            dob_email = config[0]['dob_email']
-        
-            return(config)
-        
-        except:
-            logger.info('error with dob config file ',exc_info=True)
-            
-    
-    def scrape_logger(logger_name):
-        name = logger_name.replace('.log','')
-        logger = logging.getLogger(name)
-        if not logger.handlers:
-            logger.propagate = False
-            handler = logging.FileHandler(logger_name)
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.setLevel(logging.INFO)
-            logger.addHandler(handler)
-            logger.info('logger ready')
-        return(logger)
-        
-    
-    def scrape_database(config_file,logger):
-        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
-        
-        try:
-            with open(os.path.join(__location__,'database.json')) as f:
-                config = json.load(f)
-            
-            password = config[0]['password']
-            user_name = config[0]['user_id']
-            database = config[0]['database']
-            connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE="+str(database)+";UID="+str(user_name)+";PWD="+str(password)
-            params = urllib.parse.quote_plus(connection_string)
-        except:
-            logger.info('error with database config file ',exc_info=True)
-        
-        try:
-            engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
-            connection=engine.connect()
-            logger.info('connected to database ')
-            return(connection)
-        except:
-            logger.info('error with database connection ',exc_info=True)
-            return(None)
-    
-    
-    def scrape_driver(driver_path, browser, headless = False):
-        if browser == 'Firefox':
-        
-            try:
-                options = Options()
-                options.headless = headless
-                driver = webdriver.Firefox(options=options, executable_path=driver_path)
-                logger.info('successfully created the web driver ',exc_info=True)
-                return(driver)
-            except:
-                logger.info('error creating the firefox web scraper ',exc_info=True)
-        else:
-        
-            try:
-                chromeOptions = webdriver.ChromeOptions()
-                if headless:
-                    chromeOptions.add_argument('headless')
-                driver = webdriver.Chrome(options=chromeOptions, executable_path=driver_path)
-                logger.info('successfully created the web driver')
-                return(driver)
-            except:
-                logger.info('error creating the  chrome web scraper ',exc_info=True)
-                return(None)
-
-
-#%%    
-            
 def login(driver,email,pword):
     username = email
     password = pword
@@ -262,7 +164,7 @@ def date_list(date_string = '2018-07-06'):
 
     return(date_list)
 #%%    
-def link_list(date_list):
+def link_list(date_list, test = False):
     replace_list = ['YYYY','MM','DD']
     all_links = []
     for date in date_list:
@@ -271,8 +173,11 @@ def link_list(date_list):
         for old, new in zip(replace_list,d):
             base_link = base_link.replace(old,new)
         all_links.append(base_link)
-    
-    return(all_links)
+
+    if test:
+        return(all_links[:5])
+    else:
+        return(all_links)
 #%% 
 #take the list of links and pass them to the get_table function
 
@@ -282,6 +187,13 @@ def dob_dataframe(all_links,driver):
         try:
             df = get_table(link,driver)
             print(df.head())
+            print(df.dtypes)
+            #convert the datatypes
+            df['Close Last Trade Day'] = df['Close Last Trade Day'].astype('object')
+            df['Unnamed: 2'] = df['Unnamed: 2'].astype('object')
+            df['Unnamed: 1'] = pd.to_numeric(df['Unnamed: 1'], errors = 'coerce')
+            df['Implied Values'] = pd.to_numeric(df['Implied Values'], errors = 'coerce')
+            df['Date'] = pd.to_datetime(df['Date'], errors = 'coerce')
             oil_data.append(df)
             logger.info('got '+str(link))
         except:
@@ -289,30 +201,28 @@ def dob_dataframe(all_links,driver):
     df = pd.concat(oil_data, axis=0, sort=False, ignore_index=True)
     return(df)
     
-    
 #%%
 data_file = 'dob.csv'
 direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
 driver_path = r'/home/grant/geckodriver'
-scrape(directory = direc)        
-logger = scrape.scrape_logger('daily_oil_bulletin.log')
-driver = scrape.scrape_driver(driver_path = driver_path, browser = 'Firefox', headless = True)
-dob_config = scrape.dob_login('database.json',logger)
-email = dob_config[0]['dob_email']
-password = dob_config[0]['dob_password'] 
+sc.scrape(directory = direc)        
+logger = sc.scrape.scrape_logger('daily_oil_bulletin.log')
+driver = sc.scrape.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = False)
+config_file = sc.scrape.config_file('database.json',logger)
+email = config_file[0]['dob_email']
+password = config_file[0]['dob_password']
 
 #%%
 try:
     driver = login(driver,email = email, pword = password)
     dates = date_list()
-    links = link_list(dates)
+    links = link_list(dates,test = True)
     oil = dob_dataframe(links,driver)
+    oil.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'})
 except:
     None #add errors to logger
 finally:
     driver.close()
-    connection.close()
+    #connection.close()
 #%%
-
-
-
+print(oil.dtypes)
