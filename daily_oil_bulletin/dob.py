@@ -186,8 +186,8 @@ def dob_dataframe(all_links,driver):
     for link in all_links:
         try:
             df = get_table(link,driver)
-            print(df.head())
-            print(df.dtypes)
+            #print(df.head())
+            #print(df.dtypes)
             #convert the datatypes
             df['Close Last Trade Day'] = df['Close Last Trade Day'].astype('object')
             df['Unnamed: 2'] = df['Unnamed: 2'].astype('object')
@@ -205,10 +205,11 @@ def dob_dataframe(all_links,driver):
 data_file = 'dob.csv'
 direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
 driver_path = r'/home/grant/geckodriver'
-sc.scrape(directory = direc)        
-logger = sc.scrape.scrape_logger('daily_oil_bulletin.log')
-driver = sc.scrape.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = False)
-config_file = sc.scrape.config_file('database.json',logger)
+dob = sc.scrape(direc)        
+logger = dob.scrape_logger('daily_oil_bulletin.log')
+driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = False)
+connection = dob.scrape_database('database.json',logger)
+config_file = dob.config_file('database.json',logger)
 email = config_file[0]['dob_email']
 password = config_file[0]['dob_password']
 
@@ -216,13 +217,13 @@ password = config_file[0]['dob_password']
 try:
     driver = login(driver,email = email, pword = password)
     dates = date_list()
-    links = link_list(dates,test = True)
+    links = link_list(dates,test = False)
     oil = dob_dataframe(links,driver)
-    oil.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'})
+    oil.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'},inplace = True)
+    dob.insert_csv(oil,data_file,logger)
 except:
     None #add errors to logger
 finally:
     driver.close()
-    #connection.close()
+
 #%%
-print(oil.dtypes)
