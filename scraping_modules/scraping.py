@@ -14,8 +14,6 @@ import pandas as pd
 #use a class to iniate the database, driver and logger for scraping
 class scrape:
     
-    data_file = 'default.csv'
-    
     def __init__(self,directory):
         self.directory = directory
         os.chdir(directory)
