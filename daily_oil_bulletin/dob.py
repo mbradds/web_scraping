@@ -205,14 +205,15 @@ def dob_dataframe(all_links,driver):
 data_file = 'dob.csv'
 direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
 driver_path = r'/home/grant/geckodriver'
-dob = sc.scrape(direc)        
+dob = sc.scrape(direc)  
 logger = dob.scrape_logger('daily_oil_bulletin.log')
-driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = False)
+driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = True)
 connection = dob.scrape_database('database.json',logger)
 config_file = dob.config_file('database.json',logger)
 email = config_file[0]['dob_email']
 password = config_file[0]['dob_password']
-
+#insert the data using ins object
+ins = sc.insert(direc, csv_path = data_file)   
 #%%
 try:
     driver = login(driver,email = email, pword = password)
@@ -220,7 +221,7 @@ try:
     links = link_list(dates,test = False)
     oil = dob_dataframe(links,driver)
     oil.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'},inplace = True)
-    dob.insert_csv(oil,data_file,logger)
+    ins.insert_csv(oil,logger)
 except:
     None #add errors to logger
 finally:

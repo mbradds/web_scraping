@@ -93,7 +93,18 @@ class scrape:
         except:
             logger.info('error with config file ',exc_info=True)
             return(None)
-            
+
+#this class handles inserting new scraped data into a csv or database table
+class insert:
+
+    #directory is used for the csv save location
+    #a database table name can be specified
+    #add database driver to this class...
+    def __init__(self,directory,csv_path = None, table = None):
+        self.directory = directory
+        self.csv_path = csv_path
+        os.chdir(directory)
+                
     #return a dataframe that does not exist in the csv or database
     #df1 = database/csv, df2 = scraped df
     def return_not_in_csv(self,logger,df1, df2):
@@ -131,25 +142,27 @@ class scrape:
             return(None)
             
     
-    #functions for inserting to csv/db
+    #functions for inserting to csv/db   data_file = 'default.csv'
     
-    def insert_csv(self,df, csv_path,logger):
+    def insert_csv(self,df,logger):
         #get everything into the csv
-        if os.path.isfile(csv_path):
+        if os.path.isfile(self.csv_path):
             #if file exists, then append all the new data
-            df_csv = pd.read_csv(csv_path)
+            df_csv = pd.read_csv(self.csv_path)
             not_in_csv = self.return_not_in_csv(logger,df1=df_csv,df2=df)
             
             if not not_in_csv.empty:
             
-                with open(csv_path, 'a') as f:
+                with open(self.csv_path, 'a') as f:
                     rows_added = str(not_in_csv.shape[0])
                     not_in_csv.to_csv(f, header=False,index=False)
                 logger.info('added '+str(rows_added)+' new rows to csv')
+                
             else:   
                 logger.info('no new csv data')
+                
         else:
             #if the file does not exists, then save it and wait for the next day
             logger.info('fist scrape/insert. Added '+str(len(df))+' rows')
-            df.to_csv(csv_path, header=True,index=False)
+            df.to_csv(self.csv_path, header=True,index=False)
         return(None)
