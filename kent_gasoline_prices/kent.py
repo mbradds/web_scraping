@@ -115,18 +115,24 @@ def kent_links(product_list,report_list,frequency_list, year_list,base_url='http
                     if report != 'Wholesale':
                     
                         url = 'PRODUCT/REPORT%20(INCLUDETAX.%20Tax)/FREQUENCY/YYYY/PRODUCT_REPORT%20(INCLUDETAX.%20Tax)_FREQUENCY_YYYY.EXT'
-                        url = url.replace('PRODUCT',product)
-                        url = url.replace('REPORT',report)
-                        url = url.replace('FREQUENCY',frequency)
-                        url = url.replace('YYYY',str(year))
-                        
+                  
                         if report == 'Retail':
                             url = url.replace('INCLUDETAX','Incl')
-                        
-                        
-                        print(url)    
+                        else:
+                            url = url.replace('INCLUDETAX','Excl')
+                    else:
+                        url = 'PRODUCT/REPORT/FREQUENCY/YYYY/PRODUCT_REPORT_FREQUENCY_YYYY.EXT'
                     
-                    #print(product,report,frequency,year)
+                    
+                    url = url.replace('PRODUCT',product)
+                    url = url.replace('REPORT',report)
+                    url = url.replace('FREQUENCY',frequency)
+                    url = url.replace('YYYY',str(year))
+                    
+                    print(url)    
+                    
+                    #up to here takes care of everything except for the link extension
+                 
     return(None)
 
 
