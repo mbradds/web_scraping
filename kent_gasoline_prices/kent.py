@@ -9,11 +9,10 @@ import datetime
 import numpy as np
 import sys
 from sqlalchemy import create_engine
-import urllib
+import time
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-
+import scraping as sc
 #%%
-    
 #build a function that gets all of the links first, and then requests them...
     
 #exclude furnace oil for now. These lists contain the structure of the kent website
@@ -123,20 +122,23 @@ def request_df(links):
                 df = get_kent_excel(url, head=2)
         else:
             df = get_kent_html(url)
-            
+        
+        #reindex the dataframe
+        df.reset_index(inplace=True)
+          
         if report != 'Wholesale':
-            df = df[df['Unnamed: 0']!= 'S-Simple V-Volume Weighted P-Population Weighted']
+            df = df[df['index']!= 'S-Simple V-Volume Weighted P-Population Weighted']
             df = df.dropna(axis=0, how = 'all')
             df = df.dropna(axis=1, how = 'all')
-            df = pd.melt(df, id_vars=['Unnamed: 0'], var_name = 'Date', value_name = 'Price')
-            df.rename(index=str, columns={"Unnamed: 0": "Region"},inplace=True)
+            df = pd.melt(df, id_vars=['index'], var_name = 'Date', value_name = 'Price')
+            df.rename(index=str, columns={"index": "Region"},inplace=True)
             #convert date (month/day) to date (month/day/year)
             df['Date'] = df['Date']+'/'+str(year)
 
         else:
-            df = pd.melt(df, id_vars=['Unnamed: 0'], var_name = 'Region', value_name = 'Price')
+            df = pd.melt(df, id_vars=['index'], var_name = 'Region', value_name = 'Price')
             df = df.dropna(axis=0, how = 'any')
-            df.rename(index=str, columns={"Unnamed: 0": "Date"}, inplace = True)
+            df.rename(index=str, columns={"index": "Date"}, inplace = True)
             
         #these columns are common regardless of report type
         df['Year'] = int(year)
@@ -153,40 +155,52 @@ def request_df(links):
         
     return(df)
     
-#%%
-#process the dataframe
-product_list = ['Unleaded','Midgrade','Premium','Diesel']
-report_list = ['Retail','Retail excl tax','Wholesale']
-frequency_list = ['Daily','Weekly','Monthly']
-#test the links:
-year_list = gather_years()                   
-x = kent_links(product_list,report_list,frequency_list,year_list)
-#%%
-    
-year_list = gather_years()   
-year_list = [year_list[-4]]            
-links = kent_links(product_list,report_list,frequency_list,year_list)
-links_test = links[:1]
-df = request_df(links_test)
-print(df)    
-#df_process = df.copy()
-#df_process = df_process.dropna(axis=0, how = 'all')
-#df_process = df_process.dropna(axis=1, how = 'all')
-#df_process = pd.melt(df_process, id_vars=['Unnamed: 0'], var_name = 'Date', value_name = 'Price')
-#df_process = df_process.dropna(axis=0, how = 'any')
-#df_process = df_process.dropna(axis=1, how = 'all')
-#print(df_process)    
     
 #%%
+#gather all of the dataframes in a try
+
+def gather_prices(link_structure,logger,connection,insert_obj):
+    
+    for ls in link_structure:
+        
+        try:
+            df = request_df([ls])
+            print(df.head())
+            time.sleep(2)
+            insert_obj.insert_csv(df,logger)
+            print('got csv'+str(ls))
+            insert_obj.insert_database(df,'kent',logger,connection)
+            print('got db'+str(ls))
+        except:
+            print('failed'+str(ls))
+    
+#%%
+   
 #insert the data into the csv/db.
 #each df should be inserted after it is scraped
 #here are the steps:
 #1 scrape the df
 #2 check if it is already saved
 
-
+data_file = 'kent.csv'
+direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
+kent = sc.scrape(direc)  
+logger = kent.scrape_logger('kent.log')
+connection = kent.scrape_database('database.json',logger)
+ins = sc.insert(direc, csv_path = data_file) 
 #%%
          
-       
+product_list = ['Unleaded','Midgrade','Premium','Diesel']
+report_list = ['Retail','Retail excl tax','Wholesale']
+frequency_list = ['Daily','Weekly','Monthly']   
 
+year_list = gather_years()   
+#year_list = [year_list[-1]]            
+links = kent_links(product_list,report_list,frequency_list,year_list)
+#links_test = links[:1]
+gather_prices(links,logger,connection,ins)
+  
+#%%
+
+#midgrade wholsale only has 2016 and up!
  

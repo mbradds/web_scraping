@@ -142,8 +142,7 @@ class insert:
             return(None)
             
     
-    #functions for inserting to csv/db   data_file = 'default.csv'
-    
+    #functions for inserting to csv/db
     def insert_csv(self,df,logger):
         #get everything into the csv
         if os.path.isfile(self.csv_path):
@@ -166,3 +165,23 @@ class insert:
             logger.info('fist scrape/insert. Added '+str(len(df))+' rows')
             df.to_csv(self.csv_path, header=True,index=False)
         return(None)
+        
+    def insert_database(self,df,table,logger, connection):
+        sql_table = str(table)
+        try:
+            s = 'select * from [dbo].'+sql_table
+            nymex_db = pd.read_sql_query(s,connection)
+            #fix the datatypes
+ 
+            not_in_db = self.return_not_in_csv(df1=nymex_db,df2=df)
+            
+            if not not_in_db.empty:
+                rows_added = str(not_in_db.shape[0])
+                not_in_db.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
+                logger.info('added '+str(rows_added)+' new rows to database')
+            else:
+                logger.info('no new database data')
+    
+        except:
+            #no rows are returned (the table is empty)
+            logging.info('database query or insert error')
