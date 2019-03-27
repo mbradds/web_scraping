@@ -200,7 +200,5 @@ links = kent_links(product_list,report_list,frequency_list,year_list)
 #links_test = links[:1]
 gather_prices(links,logger,connection,ins)
   
-#%%
-
-#midgrade wholsale only has 2016 and up!
+#%%#midgrade wholsale only has 2016 and up!
  
