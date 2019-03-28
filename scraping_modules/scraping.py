@@ -142,14 +142,11 @@ class insert:
 
 
     #functions for inserting to csv/db
-    #change the insert functions so that they take in two dataframes.
-    #the first dataframe is scraped, and the second one is saved...
-    def insert_csv(self,df,logger):
+    def insert_csv(self,df_scrape,df_csv,logger):
         #get everything into the csv
         if os.path.isfile(self.csv_path):
-            #if file exists, then append all the new data
-            df_csv = pd.read_csv(self.csv_path)
-            not_in_csv = self.return_not_in_csv(logger,df1=df_csv,df2=df)
+
+            not_in_csv = self.return_not_in_csv(logger,df1=df_csv,df2=df_scrape)
             
             if not not_in_csv.empty:
             
@@ -157,26 +154,24 @@ class insert:
                     rows_added = str(not_in_csv.shape[0])
                     not_in_csv.to_csv(f, header=False,index=False)
                     logger.info('added '+str(rows_added)+' new rows to csv')
-                    logger.info('add datatypes: '+str(not_in_csv.dtypes))
                 
             else:   
                 logger.info('no new csv data')
                 
         else:
             #if the file does not exists, then save it and wait for the next day
-            df.to_csv(self.csv_path, header=True,index=False)
-            logger.info('fist scrape/insert. Added '+str(len(df))+' rows to csv')
-            logger.info('first insert data types: '+str(df.dtypes))
+            df_scrape.to_csv(self.csv_path, header=True,index=False)
+            logger.info('fist scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
         
-    def insert_database(self,df,table,logger, connection):
+    def insert_database(self,df_scrape, df_database,table,logger, connection):
         sql_table = str(table)
         try:
-            s = 'select * from [dbo].'+sql_table
-            nymex_db = pd.read_sql_query(s,connection)
+            #s = 'select * from [dbo].'+sql_table
+            #nymex_db = pd.read_sql_query(s,connection)
             #fix the datatypes
  
-            not_in_db = self.return_not_in_csv(df1=nymex_db,df2=df)
+            not_in_db = self.return_not_in_csv(df1=df_database,df2=df_scrape)
             
             if not not_in_db.empty:
                 rows_added = str(not_in_db.shape[0])
@@ -199,7 +194,7 @@ class insert:
                      return(df_csv)
         except:
             logger.info('csv does not exist, or is empty')
-            raise Exception('csv does not exist, or is empty')
+            return(None)
     
     def return_saved_table(self,table,logger,connection):
         sql_table = str(table)
@@ -208,6 +203,6 @@ class insert:
             db = pd.read_sql_query(s,connection)
             return(db)
         except:
-            logger.info('database table does not exist, or is empty')
-            raise Exception('database table does not exist, or is empty')
+            logger.info('database table does not exist')
+            raise Exception('database table does not exist')
         
