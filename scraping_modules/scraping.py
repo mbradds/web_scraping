@@ -113,7 +113,7 @@ class insert:
             logger.info('scraped df and csv/db have different number of columns',exc_info=True)
             
         #this try block attempts to correct any differences in data types between stored and scraped dataframes
-        
+        #TODO: this should be in an outer try block
         for x in df1.columns:
             if x not in df2.columns:
                 logger.info('scraped df and csv/db have different column names')
@@ -121,13 +121,13 @@ class insert:
             if df1[x].dtypes != df2[x].dtypes:
                 logger.info('csv/db and scraped df have different column types')
                         #try to make the scraped df types the same as the csv or db
-        #            try:
-        #                df1[x] = df1[x].astype(df2[x].dtypes)
-        #                logger.info('converted csv/db column '+str(x))
-        #            except:
-        #                logger.info('error converting csv/db column '+str(x), exc_info=True)
-        #        else:
-        #            None #datatype is the same
+                try:
+                    df1[x] = df1[x].astype(df2[x].dtypes)
+                    logger.info('converted csv/db column '+str(x))
+                except:
+                    logger.info('error converting csv/db column '+str(x), exc_info=True)
+            else:
+                None #datatype is the same
         
         #once the types are the same, then merge them and get anything not in csv or db
         try:
@@ -163,7 +163,8 @@ class insert:
             df_scrape.to_csv(self.csv_path, header=True,index=False)
             logger.info('fist scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
-        
+    
+    #TODO: the database insert isnt working on kent
     def insert_database(self,df_scrape, df_database,table,logger, connection):
         sql_table = str(table)
         try:

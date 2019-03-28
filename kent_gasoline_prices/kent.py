@@ -167,9 +167,11 @@ def gather_prices(link_structure,logger,connection,insert_obj):
             df = request_df([ls])
             print(df.head())
             time.sleep(2)
-            insert_obj.insert_csv(df,logger)
+            df_csv = insert_obj.return_saved_csv(logger)
+            df_database = insert_obj.return_saved_table('kent',logger,connection)
+            insert_obj.insert_csv(df,df_csv,logger)
             print('got csv'+str(ls))
-            insert_obj.insert_database(df,'kent',logger,connection)
+            insert_obj.insert_database(df,df_database,'kent',logger,connection)
             print('got db'+str(ls))
         except:
             print('failed'+str(ls))
@@ -195,10 +197,10 @@ report_list = ['Retail','Retail excl tax','Wholesale']
 frequency_list = ['Daily','Weekly','Monthly']   
 
 year_list = gather_years()   
-#year_list = [year_list[-1]]            
+year_list = [year_list[-1]]            
 links = kent_links(product_list,report_list,frequency_list,year_list)
-#links_test = links[:1]
-gather_prices(links,logger,connection,ins)
+links_test = links[:1]
+gather_prices(links_test,logger,connection,ins)
   
 #%%#midgrade wholsale only has 2016 and up!
  
