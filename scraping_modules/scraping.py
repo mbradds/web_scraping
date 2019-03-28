@@ -49,7 +49,7 @@ class scrape:
         try:
             engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
             connection=engine.connect()
-            logger.info('connected to database ',exc_info=True)
+            logger.info('connected to database')
             return(connection)
         except:
             logger.info('error with database connection ',exc_info=True)
@@ -112,23 +112,22 @@ class insert:
         if len(df1.columns) != len(df2.columns):
             logger.info('scraped df and csv/db have different number of columns',exc_info=True)
             
+        #this try block attempts to correct any differences in data types between stored and scraped dataframes
         
         for x in df1.columns:
             if x not in df2.columns:
-                logger.info('scraped df and csv/db have different column names',exc_info=True)
-            try:
-                if df1[x].dtypes != df2[x].dtypes:
-                    #try to make the scraped df types the same as the csv or db
-                    try:
-                        df1[x] = df1[x].astype(df2[x].dtypes)
-                        logger.info('converted csv/db column '+str(x))
-                    except:
-                        logger.info('error converting csv/db column '+str(x), exc_info=True)
-                else:
-                    logger.info('csv/db and scraped df have same types')
-                    
-            except:
-                logger.info('csv/db and scraped df have different column types', exc_info=True)
+                logger.info('scraped df and csv/db have different column names')
+                
+            if df1[x].dtypes != df2[x].dtypes:
+                logger.info('csv/db and scraped df have different column types')
+                        #try to make the scraped df types the same as the csv or db
+        #            try:
+        #                df1[x] = df1[x].astype(df2[x].dtypes)
+        #                logger.info('converted csv/db column '+str(x))
+        #            except:
+        #                logger.info('error converting csv/db column '+str(x), exc_info=True)
+        #        else:
+        #            None #datatype is the same
         
         #once the types are the same, then merge them and get anything not in csv or db
         try:
@@ -139,10 +138,12 @@ class insert:
           
         except:
             logger.info('couldnt merge the csv/db and scraped df', exc_info=True)
-            return(None)
-            
-    
+            raise Exception('saved dataframe and scraped dataframe have different data types')
+
+
     #functions for inserting to csv/db
+    #change the insert functions so that they take in two dataframes.
+    #the first dataframe is scraped, and the second one is saved...
     def insert_csv(self,df,logger):
         #get everything into the csv
         if os.path.isfile(self.csv_path):
@@ -155,15 +156,17 @@ class insert:
                 with open(self.csv_path, 'a') as f:
                     rows_added = str(not_in_csv.shape[0])
                     not_in_csv.to_csv(f, header=False,index=False)
-                logger.info('added '+str(rows_added)+' new rows to csv')
+                    logger.info('added '+str(rows_added)+' new rows to csv')
+                    logger.info('add datatypes: '+str(not_in_csv.dtypes))
                 
             else:   
                 logger.info('no new csv data')
                 
         else:
             #if the file does not exists, then save it and wait for the next day
-            logger.info('fist scrape/insert. Added '+str(len(df))+' rows')
             df.to_csv(self.csv_path, header=True,index=False)
+            logger.info('fist scrape/insert. Added '+str(len(df))+' rows to csv')
+            logger.info('first insert data types: '+str(df.dtypes))
         return(None)
         
     def insert_database(self,df,table,logger, connection):
@@ -185,3 +188,26 @@ class insert:
         except:
             #no rows are returned (the table is empty)
             logging.info('database query or insert error')
+    
+    #the following 2 functions are used mainly to check the datatypes of the saved data, and to see what has already been scraped    
+    def return_saved_csv(self, logger):
+        
+        try:
+            if os.path.isfile(self.csv_path):
+                 with open(self.csv_path, 'r') as f:
+                     df_csv = pd.read_csv(f)
+                     return(df_csv)
+        except:
+            logger.info('csv does not exist, or is empty')
+            raise Exception('csv does not exist, or is empty')
+    
+    def return_saved_table(self,table,logger,connection):
+        sql_table = str(table)
+        try:
+            s = 'select * from [dbo].'+sql_table
+            db = pd.read_sql_query(s,connection)
+            return(db)
+        except:
+            logger.info('database table does not exist, or is empty')
+            raise Exception('database table does not exist, or is empty')
+        
