@@ -3,3 +3,4 @@
 *.sql
 *.ipynb
 kent.csv
+!create_table_kent.sql

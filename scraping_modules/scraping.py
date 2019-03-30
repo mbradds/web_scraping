@@ -1,4 +1,3 @@
-
 import os
 import logging
 import json
@@ -9,7 +8,10 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.firefox.options import Options
 import pandas as pd
-
+#TODO: try instatiating the logger so that you dont need to pass it in each time
+#TODO: raise errors when database/logger/drivers do not properly connect 
+#TODO: Use class inheritance from example: https://github.com/Pierian-Data/Complete-Python-3-Bootcamp/blob/master/15-Advanced%20OOP/01-Advanced%20Object%20Oriented%20Programming.ipynb
+#raising errors should replace alot of the logging below
 
 #use a class to iniate the database, driver and logger for scraping
 class scrape:
@@ -19,41 +21,61 @@ class scrape:
         os.chdir(directory)
     
     def scrape_logger(self,logger_name):
-        name = logger_name.replace('.log','')
-        logger = logging.getLogger(name)
-        if not logger.handlers:
-            logger.propagate = False
-            logger.setLevel(logging.INFO)
-            handler = logging.FileHandler(logger_name)
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        logger.info('created the logger')
-        return(logger)
+        
+        try:
+            name = logger_name.replace('.log','')
+            logger = logging.getLogger(name)
+            if not logger.handlers:
+                logger.propagate = False
+                logger.setLevel(logging.INFO)
+                handler = logging.FileHandler(logger_name)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+            logger.info('created the logger')
+            return(logger)
+        except:
+            raise
     
-    def scrape_database(self,config_file,logger):
+    def scrape_database(self,config_file,logger,work=False):
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
         
-        try:
-            with open(os.path.join(__location__,config_file)) as f:
-                config = json.load(f)
-            
-            password = config[0]['password']
-            user_name = config[0]['user_id']
-            database = config[0]['database']
-            connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE="+str(database)+";UID="+str(user_name)+";PWD="+str(password)
-            params = urllib.parse.quote_plus(connection_string)
-        except:
-            logger.info('error with database config file ',exc_info=True)
+        if not work:
         
-        try:
-            engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
-            connection=engine.connect()
-            logger.info('connected to database')
-            return(connection)
-        except:
-            logger.info('error with database connection ',exc_info=True)
-            return(None)
+            try:
+                with open(os.path.join(__location__,config_file)) as f:
+                    config = json.load(f)
+                
+                password = config[0]['password']
+                user_name = config[0]['user_id']
+                database = config[0]['database']
+                connection_string = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE="+str(database)+";UID="+str(user_name)+";PWD="+str(password)
+                params = urllib.parse.quote_plus(connection_string)
+            except:
+                logger.info('error with database config file ',exc_info=True)
+                raise
+            
+            try:
+                engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
+                connection=engine.connect()
+                logger.info('connected to database')
+                return(connection)
+            except:
+                logger.info('error with database connection ',exc_info=True)
+                raise 
+        else:
+            
+            try:
+                with open(os.path.join(__location__,config_file)) as f:
+                    config = json.load(f)
+                    conn_str = config[0]['conn_sting']
+                    conn = create_engine(conn_str)
+                    logger.info('connected to work database')
+                    return(conn)
+            except:
+                logger.info('error with work database connection ',exc_info=True)
+                raise 
+                
             
     
     def scrape_driver(self,driver_path,logger, browser, headless = True):
@@ -101,8 +123,10 @@ class insert:
     #a database table name can be specified
     #add database driver to this class...
     def __init__(self,directory,csv_path = None, table = None):
+        #scrape.__init__(self,)
         self.directory = directory
         self.csv_path = csv_path
+        self.table = table
         os.chdir(directory)
                 
     #return a dataframe that does not exist in the csv or database
@@ -114,20 +138,21 @@ class insert:
             
         #this try block attempts to correct any differences in data types between stored and scraped dataframes
         #TODO: this should be in an outer try block
-        for x in df1.columns:
-            if x not in df2.columns:
-                logger.info('scraped df and csv/db have different column names')
-                
-            if df1[x].dtypes != df2[x].dtypes:
-                logger.info('csv/db and scraped df have different column types')
-                        #try to make the scraped df types the same as the csv or db
-                try:
+        try:
+            
+            for x in df1.columns:
+                if x not in df2.columns:
+                    logger.info('scraped df and csv/db have different column names')
+                    
+                if df1[x].dtypes != df2[x].dtypes:
+                    logger.info('csv/db and scraped df have different column types')
                     df1[x] = df1[x].astype(df2[x].dtypes)
-                    logger.info('converted csv/db column '+str(x))
-                except:
-                    logger.info('error converting csv/db column '+str(x), exc_info=True)
-            else:
-                None #datatype is the same
+    
+                else:
+                    None #datatype is the same
+        except:
+            logger.info('error automatically changing datatypes for scraped df and saved df ',exc_info=True)
+            raise
         
         #once the types are the same, then merge them and get anything not in csv or db
         try:
@@ -138,7 +163,7 @@ class insert:
           
         except:
             logger.info('couldnt merge the csv/db and scraped df', exc_info=True)
-            raise Exception('saved dataframe and scraped dataframe have different data types')
+            raise
 
 
     #functions for inserting to csv/db
@@ -161,18 +186,19 @@ class insert:
         else:
             #if the file does not exists, then save it and wait for the next day
             df_scrape.to_csv(self.csv_path, header=True,index=False)
-            logger.info('fist scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
+            logger.info('first scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
     
     #TODO: the database insert isnt working on kent
     def insert_database(self,df_scrape, df_database,table,logger, connection):
-        sql_table = str(table)
+        
         try:
+            sql_table = str(table)
             #s = 'select * from [dbo].'+sql_table
             #nymex_db = pd.read_sql_query(s,connection)
             #fix the datatypes
  
-            not_in_db = self.return_not_in_csv(df1=df_database,df2=df_scrape)
+            not_in_db = self.return_not_in_csv(logger,df1=df_database,df2=df_scrape)
             
             if not not_in_db.empty:
                 rows_added = str(not_in_db.shape[0])
@@ -184,6 +210,7 @@ class insert:
         except:
             #no rows are returned (the table is empty)
             logging.info('database query or insert error')
+            raise
     
     #the following 2 functions are used mainly to check the datatypes of the saved data, and to see what has already been scraped    
     def return_saved_csv(self, logger):
@@ -195,7 +222,7 @@ class insert:
                      return(df_csv)
         except:
             logger.info('csv does not exist, or is empty')
-            return(None)
+            raise
     
     def return_saved_table(self,table,logger,connection):
         sql_table = str(table)
@@ -205,5 +232,20 @@ class insert:
             return(db)
         except:
             logger.info('database table does not exist')
-            raise Exception('database table does not exist')
+            raise 
+    
+    #this function should be used when there is a 'url' column in the saved data. When the url is saved in the df column, then
+    #the amount of requests can be reduced
+    
+    def url_column(self, column_name, df_csv):
         
+        if column_name not in df_csv.columns:
+            raise Exception('wrong url column name. Check column names')
+        
+        unique_urls = df_csv[str(column_name)].unique()
+        
+        return(unique_urls)
+        
+        
+    
+    

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import requests
 from requests.auth import HTTPBasicAuth
 import io
@@ -35,7 +34,10 @@ def kent_links(product_list,report_list,frequency_list, year_list):
             for frequency in frequency_list:
                 for year in year_list:
                     
-                    if report in ['Retail','Retail excl tax'] and year >= 2016 and frequency == 'Daily' or report == 'Wholesale': 
+                    if (report in ['Retail','Retail excl tax'] and year >= 2016 and frequency == 'Daily') or \
+                    (report == 'Wholesale' and product == 'Midgrade' and year >= 2016) or \
+                    (report=='Wholesale' and product in ['Unleaded','Premium','Diesel']) or\
+                    (report in ['Retail','Retail excl tax'] and frequency in ['Weekly','Monthly']):
                     
                         if report != 'Wholesale':
                         
@@ -80,17 +82,16 @@ def kent_links(product_list,report_list,frequency_list, year_list):
 def get_kent_excel(link, head):
     sheet_name = 'Prices'
     r = requests.get(link, allow_redirects=True, stream=True, headers=headers)
-    
-    if r.status_code == requests.codes.ok:
-        
-            df_x = pd.read_excel(io.BytesIO(r.content), sheet_name=sheet_name, header = head, parse_dates=[0])
 
-            if 'Average' in df_x.columns:
+    if r.status_code == requests.codes.ok:
+        #pandas reads this differently on a linux machine
+        df_x = pd.read_excel(io.BytesIO(r.content), sheet_name=sheet_name, header = head, parse_dates=[0])
+        if 'Average' in df_x.columns:
                 df_x.drop('Average',axis=1,inplace = True)
                 
             #print('got excel for '+str(link))
             #put logger here
-            return(df_x)
+        return(df_x)
     else:
         return(None)
 
@@ -122,23 +123,43 @@ def request_df(links):
                 df = get_kent_excel(url, head=2)
         else:
             df = get_kent_html(url)
+            
         
-        #reindex the dataframe
-        df.reset_index(inplace=True)
-          
-        if report != 'Wholesale':
-            df = df[df['index']!= 'S-Simple V-Volume Weighted P-Population Weighted']
+        #get rid of garbage rows
+        
+        try:
+            df = df[df[df.columns[0]]!= str(df.columns[0])]
+            df = df[df[df.columns[0]]!= 'S-Simple V-Volume Weighted P-Population Weighted']
+            df = df[df[df.columns[0]]!= 'S-Simple  V-Volume Weighted P-Population Weighted To print, copy contents to, and print from a spreadsheet']
+        
+        except:
+            None
+            
+        
+        if report != 'Wholesale' and frequency != 'Monthly':
+
             df = df.dropna(axis=0, how = 'all')
             df = df.dropna(axis=1, how = 'all')
-            df = pd.melt(df, id_vars=['index'], var_name = 'Date', value_name = 'Price')
-            df.rename(index=str, columns={"index": "Region"},inplace=True)
+            df = pd.melt(df, id_vars=[df.columns[0]], var_name = 'Date', value_name = 'Price')
+            df.rename(index=str, columns={str(df.columns[0]): "Region"},inplace=True)
             #convert date (month/day) to date (month/day/year)
             df['Date'] = df['Date']+'/'+str(year)
 
-        else:
-            df = pd.melt(df, id_vars=['index'], var_name = 'Region', value_name = 'Price')
+        elif report == 'Wholesale' and frequency != 'Monthly':
+
+            df = pd.melt(df, id_vars=str(df.columns[0]), var_name = 'Date', value_name = 'Price')
             df = df.dropna(axis=0, how = 'any')
-            df.rename(index=str, columns={"index": "Date"}, inplace = True)
+            df['Date'] = df['Date']+'/'+str(year)
+            df.rename(columns={str(df.columns[0]): "Region"}, inplace = True)
+        
+        elif frequency == 'Monthly':
+            df = pd.melt(df, id_vars=str(df.columns[0]), var_name = 'Date', value_name = 'Price')
+            df['Date'] = [x.split('/')[0]+'/'+'1'+'/'+str(year) for x in df['Date']]
+            df.rename(index=str, columns={str(df.columns[0]): "Region"},inplace=True)
+
+        else:
+            None
+        
             
         #these columns are common regardless of report type
         df['Year'] = int(year)
@@ -158,23 +179,45 @@ def request_df(links):
     
 #%%
 #gather all of the dataframes in a try
-
+#TODO: look at recording the length of the scraped data, and then recording an error if the same length isnt saved
 def gather_prices(link_structure,logger,connection,insert_obj):
-    
+    #this lambda gets the number of rows that have been saved in csv or database
+    saved_length = lambda x : x.shape[0] if not x.empty else 0
+
     for ls in link_structure:
-        
+                
         try:
+            #this makes sure that only the neccecary requests are made
             df = request_df([ls])
+            print(ls)
             print(df.head())
             time.sleep(2)
-            df_csv = insert_obj.return_saved_csv(logger)
-            df_database = insert_obj.return_saved_table('kent',logger,connection)
-            insert_obj.insert_csv(df,df_csv,logger)
-            print('got csv'+str(ls))
-            insert_obj.insert_database(df,df_database,'kent',logger,connection)
-            print('got db'+str(ls))
+            logger.info('scraped '+str(df.shape[0])+' rows')
         except:
-            print('failed'+str(ls))
+            logger.info('scrape failed '+str(ls), exc_info=True)
+    
+        
+        #csv
+#        try:
+#            df_csv = pd.DataFrame(insert_obj.return_saved_csv(logger))
+#            insert_obj.insert_csv(df,df_csv,logger)
+#            print('csv length= '+str(saved_length(df_csv)))
+#            print('got csv'+str(ls))
+#            logger.info('got csv '+str(ls)+' csv length= '+str(saved_length(df_csv)))
+#        except:
+#            logger.info('failed csv '+str(ls))
+#            print('failed csv '+str(ls))
+        
+        #database
+        try:
+            df_database = insert_obj.return_saved_table('kent',logger,connection)
+            insert_obj.insert_database(df,df_database,'kent',logger,connection)
+            print('db length= '+str(saved_length(df_database)))
+            print('got db'+str(ls))
+            logger.info('got db '+str(ls)+' db length= '+str(saved_length(df_database)))
+        except:
+            print('failed database '+str(ls))
+            logger.info('failed database '+str(ls))            
     
 #%%
    
@@ -185,22 +228,40 @@ def gather_prices(link_structure,logger,connection,insert_obj):
 #2 check if it is already saved
 
 data_file = 'kent.csv'
-direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
+direc = r'F:\bucom\Energy Trade Team\Grant\gasoline_report_dashboard'
 kent = sc.scrape(direc)  
 logger = kent.scrape_logger('kent.log')
-connection = kent.scrape_database('database.json',logger)
+connection = kent.scrape_database('database.json',logger,work=True)
 ins = sc.insert(direc, csv_path = data_file) 
 #%%
          
 product_list = ['Unleaded','Midgrade','Premium','Diesel']
 report_list = ['Retail','Retail excl tax','Wholesale']
-frequency_list = ['Daily','Weekly','Monthly']   
+frequency_list = ['Daily','Weekly','Monthly']  
+
+#test
+#product_list = ['Unleaded']
+#report_list = ['Retail']
+#frequency_list = ['Weekly']  
+#year_list = [2000]
+
 
 year_list = gather_years()   
-year_list = [year_list[-1]]            
+#year_list = [year_list[-1]]            
 links = kent_links(product_list,report_list,frequency_list,year_list)
-links_test = links[:1]
-gather_prices(links_test,logger,connection,ins)
+#links_test = links[:1]
+gather_prices(links,logger,connection,ins)
+
   
 #%%#midgrade wholsale only has 2016 and up!
- 
+#2015 has xls extension
+#2000 header should be 1 not 2
+#maybe the frequency needs to be captalized
+#TODO: This code is inneficient. Maybe dont check for duplicates each time!
+#try checking if the database is empty. if so, do not check for duplicates!
+
+
+
+
+
+
