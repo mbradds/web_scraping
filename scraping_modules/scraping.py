@@ -167,17 +167,24 @@ class insert:
 
 
     #functions for inserting to csv/db
-    def insert_csv(self,df_scrape,df_csv,logger):
+    def insert_csv(self,df_scrape,logger, df_csv = None, verify_data=False):
         #get everything into the csv
         if os.path.isfile(self.csv_path):
-
-            not_in_csv = self.return_not_in_csv(logger,df1=df_csv,df2=df_scrape)
             
-            if not not_in_csv.empty:
+            if verify_data:
+            
+                to_insert = self.return_not_in_csv(logger,df1=df_csv,df2=df_scrape)
+            
+            else: 
+                
+                to_insert = df_scrape
+            
+            
+            if not to_insert.empty:
             
                 with open(self.csv_path, 'a') as f:
-                    rows_added = str(not_in_csv.shape[0])
-                    not_in_csv.to_csv(f, header=False,index=False)
+                    rows_added = str(to_insert.shape[0])
+                    to_insert.to_csv(f, header=False,index=False)
                     logger.info('added '+str(rows_added)+' new rows to csv')
                 
             else:   
@@ -185,30 +192,31 @@ class insert:
                 
         else:
             #if the file does not exists, then save it and wait for the next day
-            df_scrape.to_csv(self.csv_path, header=True,index=False)
+            to_insert.to_csv(self.csv_path, header=True,index=False)
             logger.info('first scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
     
-    #TODO: the database insert isnt working on kent
-    def insert_database(self,df_scrape, df_database,table,logger, connection):
+    
+    def insert_database(self,df_scrape,table,logger, connection, df_database = None, verify_data=False):
         
         try:
             sql_table = str(table)
-            #s = 'select * from [dbo].'+sql_table
-            #nymex_db = pd.read_sql_query(s,connection)
-            #fix the datatypes
- 
-            not_in_db = self.return_not_in_csv(logger,df1=df_database,df2=df_scrape)
             
-            if not not_in_db.empty:
-                rows_added = str(not_in_db.shape[0])
-                not_in_db.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
+            if verify_data:
+                to_insert = self.return_not_in_csv(logger,df1=df_database,df2=df_scrape)
+            
+            else:
+                to_insert = df_scrape
+            
+            
+            if not to_insert.empty:
+                rows_added = str(to_insert.shape[0])
+                to_insert.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
                 logger.info('added '+str(rows_added)+' new rows to database')
             else:
                 logger.info('no new database data')
     
         except:
-            #no rows are returned (the table is empty)
             logging.info('database query or insert error')
             raise
     
@@ -237,7 +245,7 @@ class insert:
     #this function should be used when there is a 'url' column in the saved data. When the url is saved in the df column, then
     #the amount of requests can be reduced
     
-    def url_column(self, column_name, df_csv):
+    def unique_column(self, column_name, df_csv):
         
         if column_name not in df_csv.columns:
             raise Exception('wrong url column name. Check column names')
