@@ -172,13 +172,10 @@ class insert:
         if os.path.isfile(self.csv_path):
             
             if verify_data:
-            
                 to_insert = self.return_not_in_csv(logger,df1=df_csv,df2=df_scrape)
             
             else: 
-                
                 to_insert = df_scrape
-            
             
             if not to_insert.empty:
             
@@ -196,9 +193,11 @@ class insert:
             logger.info('first scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
     
-    
-    def insert_database(self,df_scrape,table,logger, connection, df_database = None, verify_data=False):
+    #TODO: add a parameter to either append or replace data depending on the situation.
+    #check if there is new data, if so, then replace, etc
+    def insert_database(self,df_scrape,table,logger, connection, insert_type='append', df_database = None, verify_data=False):
         
+        #insert_type options: append, replace
         try:
             sql_table = str(table)
             
@@ -211,7 +210,7 @@ class insert:
             
             if not to_insert.empty:
                 rows_added = str(to_insert.shape[0])
-                to_insert.to_sql(sql_table, connection, if_exists='append', index=False,chunksize=100)
+                to_insert.to_sql(sql_table, connection, if_exists=str(insert_type), index=False,chunksize=100)
                 logger.info('added '+str(rows_added)+' new rows to database')
             else:
                 logger.info('no new database data')

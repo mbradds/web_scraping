@@ -1,8 +1,6 @@
 import requests
-from requests.auth import HTTPBasicAuth
 import io
 import pandas as pd
-import re
 import os
 import datetime
 import numpy as np
@@ -12,8 +10,6 @@ import time
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 import scraping as sc
 #%%
-#build a function that gets all of the links first, and then requests them...
-    
 #exclude furnace oil for now. These lists contain the structure of the kent website
     
 def gather_years(start = 2000):
@@ -22,7 +18,6 @@ def gather_years(start = 2000):
     year_list = [i for i in range(start,current_year+1)]
     return(year_list)      
 
-  
 def kent_links(product_list,report_list,frequency_list, year_list):
     
     url_list = []
@@ -82,7 +77,7 @@ def kent_links(product_list,report_list,frequency_list, year_list):
     return(url_list)
 
 #%%    
-
+#these functions request either the excel or html data depending on the year
 def get_kent_excel(link, head):
     sheet_name = 'Prices'
     r = requests.get(link, allow_redirects=True, stream=True, headers=headers)
@@ -92,8 +87,6 @@ def get_kent_excel(link, head):
         if 'Average' in df_x.columns:
                 df_x.drop('Average',axis=1,inplace = True)
                 
-            #print('got excel for '+str(link))
-            #put logger here
         return(df_x)
     else:
         return(None)
@@ -106,13 +99,10 @@ def get_kent_html(link,head):
                 
         if 'Average' in df_h.columns:
             df_h.drop('Average',axis=1,inplace = True)
-            #print('got html for'+p['product']+p['type']+' '+str(year))
-            #put logger here
         return(df_h)
     
 #%%
 #test the requests
-
 def request_df(links):
     
     for link in links:
@@ -130,17 +120,14 @@ def request_df(links):
             else:
                 df = get_kent_html(url,head=2)
             
-            
         #get rid of garbage rows
         try:
             df = df[df[df.columns[0]]!= str(df.columns[0])]
             df = df[df[df.columns[0]]!= 'S-Simple V-Volume Weighted P-Population Weighted']
             df = df[df[df.columns[0]]!= 'S-Simple  V-Volume Weighted P-Population Weighted To print, copy contents to, and print from a spreadsheet']
-        
         except:
             None
             
-        
         if report != 'Wholesale' and frequency != 'Monthly':
 
             df = df.dropna(axis=0, how = 'all')
@@ -169,7 +156,6 @@ def request_df(links):
 
         else:
             None
-        
             
         #these columns are common regardless of report type
         df['Year'] = int(year)
@@ -186,13 +172,10 @@ def request_df(links):
         
     return(df)
     
-    
 #%%
 #gather all of the dataframes in a try
-#TODO: look at recording the length of the scraped data, and then recording an error if the same length isnt saved
 def gather_prices(link_structure,logger,connection,insert_obj,verify):
     #this lambda gets the number of rows that have been saved in csv or database
-    
     saved_length = lambda x : x.shape[0] if not x.empty else 0
     
     for ls in link_structure:
@@ -207,7 +190,6 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
         except:
             logger.info('scrape failed '+str(ls), exc_info=True)
             
-        
         #database
         try:
             df_database = insert_obj.return_saved_table('kent',logger,connection)
@@ -220,50 +202,40 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
             logger.info('failed database '+str(ls))            
     
 #%%
-   
-data_file = 'kent.csv'
-direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
-kent = sc.scrape(direc)  
-logger = kent.scrape_logger('kent.log')
-connection = kent.scrape_database('database.json',logger,work=False)
-ins = sc.insert(direc, csv_path = data_file) 
-#%%
+if __name__ == "__main__":
+
+    direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
+    kent = sc.scrape(direc)  
+    logger = kent.scrape_logger('kent.log')
+    connection = kent.scrape_database('database.json',logger,work=False)
+    ins = sc.insert(direc) 
          
-product_list = ['Unleaded','Midgrade','Premium','Diesel']
-report_list = ['Retail','Retail excl tax','Wholesale']
-frequency_list = ['Daily','Weekly','Monthly']  
-
-#test
-#product_list = ['Unleaded']
-#report_list = ['Retail']
-#frequency_list = ['Weekly']  
-#year_list = [2000]
-
-#this should only be run once
-#check if the database is empty. If so, then all data should be added.
-#if not emty, then the yearlist should only the current year. and verify the data!
-
-database = ins.return_saved_table('kent',logger,connection)
-scraped_years =  database['Year'].unique()
-
-if len(scraped_years) == 0:
-    year_list = gather_years()
-    verify_data=False
-else:
-    year_list = gather_years()
-    year_list = [year_list[-1]] 
-    verify_data=True
-
-          
-links = kent_links(product_list,report_list,frequency_list,year_list)
-#links_test = links[:1]
-gather_prices(links,logger,connection,ins,verify_data)
-
+    product_list = ['Unleaded','Midgrade','Premium','Diesel']
+    report_list = ['Retail','Retail excl tax','Wholesale']
+    frequency_list = ['Daily','Weekly','Monthly']  
+    
+    #test
+    #product_list = ['Unleaded']
+    #report_list = ['Retail']
+    #frequency_list = ['Weekly']  
+    #year_list = [2000]
+    
+    #this should only be run once
+    #check if the database is empty. If so, then all data should be added.
+    #if not emty, then the yearlist should only the current year. and verify the data!
+    
+    database = ins.return_saved_table('kent',logger,connection)
+    scraped_years =  database['Year'].unique()
+    
+    if len(scraped_years) == 0:
+        year_list = gather_years()
+        verify_data=False
+    else:
+        year_list = gather_years()
+        year_list = [year_list[-1]] 
+        verify_data=True
+              
+    links = kent_links(product_list,report_list,frequency_list,year_list)
+    gather_prices(links,logger,connection,ins,verify_data)
+    connection.close()
   
-#%%#midgrade wholsale only has 2016 and up!
-#2015 has xls extension
-#2000 header should be 1 not 2
-#maybe the frequency needs to be captalized
-#TODO: This code is inneficient. Maybe dont check for duplicates each time!
-#try checking if the database is empty. if so, do not check for duplicates!
-
