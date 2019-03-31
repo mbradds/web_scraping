@@ -174,6 +174,7 @@ def request_df(links):
     
 #%%
 #gather all of the dataframes in a try
+#TODO: remove the try blocks below. the database errors should be handled in the scraping module
 def gather_prices(link_structure,logger,connection,insert_obj,verify):
     #this lambda gets the number of rows that have been saved in csv or database
     saved_length = lambda x : x.shape[0] if not x.empty else 0
