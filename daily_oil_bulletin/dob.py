@@ -38,9 +38,7 @@ def login(driver,email,pword):
 
 #%%    
 def get_table(link,driver):
-    
     url = link #this is the link that has the actual data table
-    #driver = login()
     driver.get(url)
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
@@ -76,85 +74,16 @@ def get_table(link,driver):
     return(df)
     
 #%%
-#this function isnt working, but could be used later to get all links on a given page    
-def get_links(function, base_url = 'https://www.dailyoilbulletin.com/reports/selected-oil-and-gas-prices/'):
-    
-    oil = pd.DataFrame()
-    
-    try:
-        driver.get(base_url)
-        html = driver.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        elems = driver.find_elements_by_xpath("//a[@href]")
-    except:
-        driver = function
-        base_url = base_url
-        driver.get(base_url)
-        html = driver.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        elems = driver.find_elements_by_xpath("//a[@href]")
-        
-        
-    links = []
-    
-    #elems = web_driver.find_elements_by_xpath("//a[@href]")
-    
-    for elem in elems:
-        links.append(elem.get_attribute("href"))
-    
-    # add clean_links_function
-    
-    selected_list = []
-    for y in links:
-        if (y.find('selected-oil-and-gas-prices') != -1) and (y.find('junewarren') == -1) and (y.find('#') == -1) and (y.find('2019')!=-1):
-            selected_list.append(y)
-            
-        
-    page_list = []
-    link_list = []
-    df_list = []
-    for x in selected_list:
-        if x.find('page') != -1:
-            if base_url == 'https://www.dailyoilbulletin.com/reports/selected-oil-and-gas-prices/':
-                page_list.append(x)
-            else:
-                pass
-        else:
-            link_list.append(x)
-            try:
-                df = get_table(x,driver)
-                print('got df'+' '+str(x))
-                #continue
-            except:
-                print('cant get df'+' '+str(x))
-                continue
-            time.sleep(1)
-            #print('got df'+' '+str(x))
-            df_list.append(df)
-            
-    page_list=list(set(page_list))
-            
-    for x in page_list:
-        l = get_links(function=login, base_url = x)
-        time.sleep(2)
-        print('getting next page')
-        link_list.extend(l)
-        
-    
-    driver.close()
-    oil = pd.concat(df_list, axis=0, sort=False, ignore_index=True)
-            
-    return(oil)
-#%%
 #returns a list that can be added added into the links
-def date_list(date_string = '2018-07-06'):
+#TODO: add mindate parameter. if csv is empty, mindate is 2018-07-06 otherwise, it is the max of the date column
+def date_list(date_text='2018-07-06'):
+    min_date = datetime.strptime(date_text, '%Y-%m-%d').date()
     today = datetime.now().date()
     end_date = today - timedelta(days=1) #lag the scraper by one day
     # get list of dates to grab data
     date_list = []
-    date_object = datetime.strptime(date_string, '%Y-%m-%d').date() # 2018/7/9 is the first day. July 6 has 1128
 
-    while end_date >= date_object:
+    while end_date >= min_date:
         day = end_date.weekday()
         if day in [5,6]:
             end_date = end_date-timedelta(days=1)
@@ -180,51 +109,67 @@ def link_list(date_list, test = False):
         return(all_links)
 #%% 
 #take the list of links and pass them to the get_table function
-
-def dob_dataframe(all_links,driver):
+def dob_dataframe(all_links,driver,logger):
     oil_data = []
     for link in all_links:
         try:
             df = get_table(link,driver)
-            #print(df.head())
-            #print(df.dtypes)
-            #convert the datatypes
             df['Close Last Trade Day'] = df['Close Last Trade Day'].astype('object')
             df['Unnamed: 2'] = df['Unnamed: 2'].astype('object')
             df['Unnamed: 1'] = pd.to_numeric(df['Unnamed: 1'], errors = 'coerce')
             df['Implied Values'] = pd.to_numeric(df['Implied Values'], errors = 'coerce')
             df['Date'] = pd.to_datetime(df['Date'], errors = 'coerce')
+            # get rid of unnececary rows:
+            df['Close Last Trade Day'] = [x.strip() for x in df['Close Last Trade Day']]
+            df = df[df['Close Last Trade Day']!='Expressed as a basis to WTI']
+            df = df[df['Close Last Trade Day']!='NYMEX Today @ 10:00 AM MST']
+            df['url'] = link
             oil_data.append(df)
+            print(df.head())
             logger.info('got '+str(link))
         except:
             logger.info('cant get '+str(link))
+            
     df = pd.concat(oil_data, axis=0, sort=False, ignore_index=True)
+    df.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'},inplace = True)
     return(df)
     
-#%%
-data_file = 'dob.csv'
-direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
-driver_path = r'/home/grant/geckodriver'
-dob = sc.scrape(direc)  
-logger = dob.scrape_logger('daily_oil_bulletin.log')
-driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = True)
-connection = dob.scrape_database('database.json',logger)
-config_file = dob.config_file('database.json',logger)
-email = config_file[0]['dob_email']
-password = config_file[0]['dob_password']
-#insert the data using ins object
-ins = sc.insert(direc, csv_path = data_file)   
-#%%
-try:
-    driver = login(driver,email = email, pword = password)
-    dates = date_list()
-    links = link_list(dates,test = False)
-    oil = dob_dataframe(links,driver)
-    oil.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'},inplace = True)
-    ins.insert_csv(oil,logger)
-except:
-    None #add errors to logger
-finally:
-    driver.close()
+    
+#%%    
+if __name__ == "__main__":
+    
+    data_file = 'dob.csv'
+    direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
+    driver_path = r'/home/grant/geckodriver'
+    dob = sc.scrape(direc)  
+    logger = dob.scrape_logger('dob.log')
+    driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = True)
+    #connection = dob.scrape_database('database.json',logger)
+    config_file = dob.config_file('database.json',logger)
+    email = config_file[0]['dob_email']
+    password = config_file[0]['dob_password']
+    ins = sc.insert(direc, csv_path = data_file)   
+    
+    try:
+        df_saved = ins.return_saved_csv()
+        if df_saved != None:
+            saved_length = len(df_saved)
+        else:
+            saved_length = 0
+            
+        driver = login(driver,email = email, pword = password)
+        if saved_length == 0:
+            dates = date_list()
+            verify = False
+        else:
+            dates = date_list(max(df_saved['Date']))
+            verify=True 
+        links = link_list(dates,test = False)
+        oil = dob_dataframe(links,driver,logger)
+        ins.insert_csv(oil,logger,verify_data=verify)
+    except:
+        None 
+    finally:
+        driver.close()
 
 #%%

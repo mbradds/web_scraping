@@ -8,11 +8,10 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.firefox.options import Options
 import pandas as pd
-#TODO: try instatiating the logger so that you dont need to pass it in each time
-#TODO: raise errors when database/logger/drivers do not properly connect 
+#TODO: raise errors when database/logger/drivers do not properly connect
 #TODO: Use class inheritance from example: https://github.com/Pierian-Data/Complete-Python-3-Bootcamp/blob/master/15-Advanced%20OOP/01-Advanced%20Object%20Oriented%20Programming.ipynb
 #raising errors should replace alot of the logging below
-
+#TODO: errors aernt being raised properly. look into how to properly throw errors
 #use a class to iniate the database, driver and logger for scraping
 class scrape:
     
@@ -85,7 +84,7 @@ class scrape:
                 options = Options()
                 options.headless = headless
                 driver = webdriver.Firefox(options=options, executable_path=driver_path)
-                logger.info('successfully created the firefox web driver ',exc_info=True)
+                logger.info('successfully created the firefox web driver')
                 return(driver)
             except:
                 logger.info('error creating the firefox web scraper ',exc_info=True)
@@ -137,7 +136,6 @@ class insert:
             logger.info('scraped df and csv/db have different number of columns',exc_info=True)
             
         #this try block attempts to correct any differences in data types between stored and scraped dataframes
-        #TODO: this should be in an outer try block
         try:
             
             for x in df1.columns:
@@ -189,7 +187,7 @@ class insert:
                 
         else:
             #if the file does not exists, then save it and wait for the next day
-            to_insert.to_csv(self.csv_path, header=True,index=False)
+            df_scrape.to_csv(self.csv_path, header=True,index=False)
             logger.info('first scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
         return(None)
     
@@ -220,16 +218,15 @@ class insert:
             raise
     
     #the following 2 functions are used mainly to check the datatypes of the saved data, and to see what has already been scraped    
-    def return_saved_csv(self, logger):
+    def return_saved_csv(self):
         
-        try:
-            if os.path.isfile(self.csv_path):
-                 with open(self.csv_path, 'r') as f:
-                     df_csv = pd.read_csv(f)
-                     return(df_csv)
-        except:
-            logger.info('csv does not exist, or is empty')
-            raise
+        if os.path.isfile(self.csv_path):
+            with open(self.csv_path, 'r') as f:
+                df_csv = pd.read_csv(f)
+                return(df_csv)
+        else:
+            return(None)
+            #raise Exception('No File')
     
     def return_saved_table(self,table,logger,connection):
         sql_table = str(table)
