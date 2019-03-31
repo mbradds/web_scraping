@@ -11,8 +11,11 @@ import logging
 import json
 import sys
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-  
 #custom module for setting up scraper
+module_path = r'/home/grant/Documents/web_scraping/scraping_modules'
+if module_path not in sys.path:
+    sys.path.insert(0,module_path)
+
 import scraping as sc
 #%%   
         
@@ -136,7 +139,7 @@ def dob_dataframe(all_links,driver,logger):
     
     
 #%%    
-if __name__ == "__main__":
+if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
     
     data_file = 'dob.csv'
     direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
@@ -173,3 +176,5 @@ if __name__ == "__main__":
         driver.close()
 
 #%%
+         
+        
