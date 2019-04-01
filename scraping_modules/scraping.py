@@ -68,9 +68,10 @@ class scrape:
                 with open(os.path.join(__location__,config_file)) as f:
                     config = json.load(f)
                     conn_str = config[0]['conn_sting']
-                    conn = create_engine(conn_str)
+                    engine = create_engine(conn_str,echo=False)
+                    connection=engine.connect()
                     logger.info('connected to work database')
-                    return(conn)
+                    return(connection)
             except:
                 logger.info('error with work database connection ',exc_info=True)
                 raise 
@@ -102,17 +103,16 @@ class scrape:
                 return(None)
     
     
-    def config_file(self,config_file,logger):
+    def config_file(self,config_file):
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
         
         try:
             with open(os.path.join(__location__,config_file)) as f:
                 config = json.load(f)
-                logger.info('imported the config file')
                 return(config)
 
         except:
-            logger.info('error with config file ',exc_info=True)
+            raise
             return(None)
 
 #this class handles inserting new scraped data into a csv or database table
@@ -195,7 +195,7 @@ class insert:
     #check if there is new data, if so, then replace, etc
     def insert_database(self,df_scrape,table,logger, connection, insert_type='append', df_database = None, verify_data=False):
         
-        #insert_type options: append, replace
+        #insert_type options: "append", "replace"
         try:
             sql_table = str(table)
             
@@ -214,7 +214,8 @@ class insert:
                 logger.info('no new database data')
     
         except:
-            logging.info('database query or insert error')
+
+            logger.info('database query or insert error',exc_info=True)
             raise
     
     #the following 2 functions are used mainly to check the datatypes of the saved data, and to see what has already been scraped    
@@ -231,11 +232,11 @@ class insert:
     def return_saved_table(self,table,logger,connection):
         sql_table = str(table)
         try:
-            s = 'select * from [dbo].'+sql_table
+            s = 'select * from '+sql_table
             db = pd.read_sql_query(s,connection)
             return(db)
         except:
-            logger.info('database table does not exist')
+            logger.info('database table does not exist',exc_info=True)
             raise 
     
     #this function should be used when there is a 'url' column in the saved data. When the url is saved in the df column, then
