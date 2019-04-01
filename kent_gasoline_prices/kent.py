@@ -202,8 +202,9 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
             logger.info('got db '+str(ls)+' db length= '+str(saved_length(df_database)))
         except:
             print('failed database '+str(ls))
-            logger.info('failed database '+str(ls))            
-    
+            logger.info('failed database '+str(ls))      
+        
+
 #%%
 if __name__ == "__main__":
 
@@ -231,7 +232,8 @@ if __name__ == "__main__":
         year_list = gather_years()
         year_list = [year_list[-1]] 
         verify_data=True
-        
+    
+    print(verify_data)
     #test
     #product_list = ['Unleaded']
     #report_list = ['Retail']

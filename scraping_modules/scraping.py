@@ -17,7 +17,7 @@ class scrape:
     
     def __init__(self,directory):
         self.directory = directory
-        os.chdir(directory)
+        os.chdir(str(directory))
     
     def scrape_logger(self,logger_name):
         
