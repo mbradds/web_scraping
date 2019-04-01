@@ -102,17 +102,16 @@ class scrape:
                 return(None)
     
     
-    def config_file(self,config_file,logger):
+    def config_file(self,config_file):
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
         
         try:
             with open(os.path.join(__location__,config_file)) as f:
                 config = json.load(f)
-                logger.info('imported the config file')
                 return(config)
 
         except:
-            logger.info('error with config file ',exc_info=True)
+            raise
             return(None)
 
 #this class handles inserting new scraped data into a csv or database table
