@@ -1,0 +1,29 @@
+Country,Latitude,Longitude,Facility Name,Owner Name (Company),State / Province / Territory,Type,Refining Type,Capacity,Unit
+Canada,49.28889,-123.006,Parkland Fuel,Parkland Fuel Corp,British Columbia,Refinery,Atmospheric Distillation,54.7,Mb/d
+Canada,50.48523,-104.576,Federated Co-op,Consumer's Co-op Refineries Ltd.,Saskatchewan,Refinery,Atmospheric Distillation,135.2,Mb/d
+Canada,53.9273447,-122.698191,Husky Prince George,Husky Energy,British Columbia,Refinery,Atmospheric Distillation,12.0,Mb/d
+Canada,42.83309,-80.0469,Imperial Nanticoke,Imperial Oil Ltd.,Ontario,Refinery,Atmospheric Distillation,113.5,Mb/d
+Canada,42.94985,-82.4171,Imperial Sarnia,Imperial Oil Ltd.,Ontario,Refinery,Atmospheric Distillation,119.0,Mb/d
+Canada,53.542659,-113.395167,Imperial Strathcona,Imperial Oil Ltd.,Alberta,Refinery,Atmospheric Distillation,191.0,Mb/d
+Canada,45.283523,-66.0118431,Irving Oil,Irving Oil Ltd.,New Brunswick,Refinery,Atmospheric Distillation,298.8,Mb/d
+Canada,47.7984871,-53.9924164,North Atlantic (NARL),North Atlantic Refining Ltd.,Newfoundland and Labrador,Refinery,Atmospheric Distillation,114.9,Mb/d
+Canada,42.9019858,-82.4512473,Shell Corunna,Shell Canada Ltd.,Ontario,Refinery,Atmospheric Distillation,77.0,Mb/d
+Canada,53.796369,-113.090808,Shell Scotford,Shell Canada Ltd.,Alberta,Refinery,Atmospheric Distillation,100.0,Mb/d
+Canada,53.55141,-113.351,Suncor Edmonton,Suncor Energy Inc.,Alberta,Refinery,Atmospheric Distillation,142.0,Mb/d
+Canada,45.64274,-73.523,Suncor Montreal,Suncor Energy Inc.,Québec,Refinery,Atmospheric Distillation,137.0,Mb/d
+Canada,42.9302045,-82.4405051,Suncor Sarnia,Suncor Energy Inc.,Ontario,Refinery,Atmospheric Distillation,85.0,Mb/d
+Canada,46.76012,-71.1926,Valero,Valero Energy Inc.,Québec,Refinery,Atmospheric Distillation,265.0,Mb/d
+Canada,49.28889,-123.006,Parkland Fuel,Parkland Fuel Corp,British Columbia,Refinery,Atmospheric Distillation,8.7,km³/d
+Canada,50.48523,-104.576,Federated Co-op,Consumer's Co-op Refineries Ltd.,Saskatchewan,Refinery,Atmospheric Distillation,21.5,km³/d
+Canada,53.9273447,-122.698191,Husky Prince George,Husky Energy,British Columbia,Refinery,Atmospheric Distillation,1.9,km³/d
+Canada,42.83309,-80.0469,Imperial Nanticoke,Imperial Oil Ltd.,Ontario,Refinery,Atmospheric Distillation,18.0,km³/d
+Canada,42.94985,-82.4171,Imperial Sarnia,Imperial Oil Ltd.,Ontario,Refinery,Atmospheric Distillation,18.9,km³/d
+Canada,53.542659,-113.395167,Imperial Strathcona,Imperial Oil Ltd.,Alberta,Refinery,Atmospheric Distillation,30.4,km³/d
+Canada,45.283523,-66.0118431,Irving Oil,Irving Oil Ltd.,New Brunswick,Refinery,Atmospheric Distillation,47.5,km³/d
+Canada,47.7984871,-53.9924164,North Atlantic (NARL),North Atlantic Refining Ltd.,Newfoundland and Labrador,Refinery,Atmospheric Distillation,18.3,km³/d
+Canada,42.9019858,-82.4512473,Shell Corunna,Shell Canada Ltd.,Ontario,Refinery,Atmospheric Distillation,12.2,km³/d
+Canada,53.796369,-113.090808,Shell Scotford,Shell Canada Ltd.,Alberta,Refinery,Atmospheric Distillation,15.9,km³/d
+Canada,53.55141,-113.351,Suncor Edmonton,Suncor Energy Inc.,Alberta,Refinery,Atmospheric Distillation,22.6,km³/d
+Canada,45.64274,-73.523,Suncor Montreal,Suncor Energy Inc.,Québec,Refinery,Atmospheric Distillation,21.8,km³/d
+Canada,42.9302045,-82.4405051,Suncor Sarnia,Suncor Energy Inc.,Ontario,Refinery,Atmospheric Distillation,13.5,km³/d
+Canada,46.76012,-71.1926,Valero,Valero Energy Inc.,Québec,Refinery,Atmospheric Distillation,42.1,km³/d

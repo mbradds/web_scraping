@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import requests
 import io
+import os
 import pandas as pd
 import sys
-module_path = r'/home/grant/Documents/web_scraping/scraping_modules'
-if module_path not in sys.path:
-    sys.path.insert(0,module_path)
-import scraping as sc
+#TODO: at home, I need to add Documents. to relative import. Why is this?
+from web_scraping.scraping_modules import scraping as sc
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
+#%%
 class nacei:
     
     url = 'https://www.nacei.org/content/documents/Refineries_NorthAmerica_201708.xlsx'
@@ -79,14 +79,15 @@ class nacei:
     
 if __name__ == "__main__":
     
-    direc = r'/home/grant/Documents/web_scraping/nacei_refineries'
+    direc = r'C:\Users\mossgrant\web_scraping\nacei_refineries'
     r = sc.scrape(direc)  
     logger = r.scrape_logger('nacei.log')
-    connection = r.scrape_database('database.json',logger,work=False)
-    ins = sc.insert(direc) 
+    #connection = r.scrape_database('database.json',logger,work=False)
+    ins = sc.insert(direc,csv_path='refineries.csv') 
     
     refineries = nacei()
     location_data = refineries.pull_data(refineries.url) 
-    df = refineries.process(location_data)
-    ins.insert_database(df,'nacei_refineries',logger,connection,insert_type = 'replace')
+    df = refineries.process(location_data,canada=True)
+    #ins.insert_database(df,'nacei_refineries',logger,connection,insert_type = 'replace')
+    ins.insert_csv(df,logger)
     
