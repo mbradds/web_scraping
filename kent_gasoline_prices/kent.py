@@ -8,7 +8,11 @@ import sys
 from sqlalchemy import create_engine
 import time
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-import scraping as sc
+module_path_work = r'C:\Users\mossgrant\web_scraping\scraping_modules'
+
+#relative import from web_scraping folder. Note: and __init__.py is needed in the scraping_modules folder for this to work
+from web_scraping.scraping_modules import scraping as sc
+
 #%%
 #exclude furnace oil for now. These lists contain the structure of the kent website
     
@@ -183,7 +187,6 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
                 
         try:
             #this makes sure that only the neccecary requests are made
-            print(ls)
             df = request_df([ls])
             print(df.head())
             time.sleep(2)
@@ -196,30 +199,24 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
             df_database = insert_obj.return_saved_table('kent',logger,connection)
             insert_obj.insert_database(df,'kent',logger,connection,df_database=df_database, verify_data=verify)
             print('db length= '+str(saved_length(df_database)))
-            print('got db'+str(ls))
             logger.info('got db '+str(ls)+' db length= '+str(saved_length(df_database)))
         except:
             print('failed database '+str(ls))
-            logger.info('failed database '+str(ls))            
-    
+            logger.info('failed database '+str(ls))      
+        
+
 #%%
 if __name__ == "__main__":
 
-    direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
+    direc = r'C:\Users\mossgrant\web_scraping\kent_gasoline_prices'
     kent = sc.scrape(direc)  
     logger = kent.scrape_logger('kent.log')
-    connection = kent.scrape_database('database.json',logger,work=False)
+    connection = kent.scrape_database('database.json',logger,work=True)
     ins = sc.insert(direc) 
          
     product_list = ['Unleaded','Midgrade','Premium','Diesel']
     report_list = ['Retail','Retail excl tax','Wholesale']
     frequency_list = ['Daily','Weekly','Monthly']  
-    
-    #test
-    #product_list = ['Unleaded']
-    #report_list = ['Retail']
-    #frequency_list = ['Weekly']  
-    #year_list = [2000]
     
     #this should only be run once
     #check if the database is empty. If so, then all data should be added.
@@ -235,8 +232,23 @@ if __name__ == "__main__":
         year_list = gather_years()
         year_list = [year_list[-1]] 
         verify_data=True
+    
+    print(verify_data)
+    #test
+    #product_list = ['Unleaded']
+    #report_list = ['Retail']
+    #frequency_list = ['Weekly']  
+    #year_list = [2000]
               
     links = kent_links(product_list,report_list,frequency_list,year_list)
     gather_prices(links,logger,connection,ins,verify_data)
     connection.close()
-  
+#%%
+      
+    
+    
+    
+    
+    
+    
+    
