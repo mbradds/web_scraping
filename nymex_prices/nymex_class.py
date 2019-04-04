@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import logging
 import logging.handlers
 import time
+import numpy as np
 import os 
 import json
 import urllib
@@ -172,20 +173,21 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
             
     except:
         logger.info('cant gather the source data, or cant build the dataframe at ', exc_info=True)
-        
+    
+    #TODO: the np.nan's should be changed to pd.to_numeric, but this function isnt working!
     try:
         df = pd.concat(data, axis=0, sort=False, ignore_index=True)
         df['Trade Date'] = df['Trade Date'].astype('datetime64[ns]')
-        df['Open'] = pd.to_numeric(df['Open'],errors='coerce')
-        df['High'] = pd.to_numeric(df['High'],errors='coerce')
-        df['Low'] = pd.to_numeric(df['Low'],errors='coerce')
-        df['Last'] = pd.to_numeric(df['Last'],errors='coerce')
-        df['Settle'] = pd.to_numeric(df['Settle'],errors='coerce')
-        df['Change'] = pd.to_numeric(df['Change'],errors='coerce')
+        df['Open'] = np.nan
+        df['High'] = np.nan
+        df['Low'] = np.nan
+        df['Last'] = np.nan
+        df['Settle'] = np.nan
+        df['Change'] = np.nan
         df['Month'] = ['JUL'+d[3:] if d[:3]=='JLY' else d for d in df['Month']]
         #add underscore to month so that csv will not change the format
         df['Month'] = [m.replace(' ','_') for m in df['Month']]
-    
+
     except:
         logger.info('cant concatentate the dataframe at ' ,exc_info=True)
      
