@@ -5,7 +5,7 @@ import io
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 from Documents.web_scraping.scraping_modules import scraping as sc
 
-
+#%%
 #get a list of all available provinces
 class nrcan_locations:
     
@@ -44,7 +44,7 @@ class nrcan_locations:
         url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=halifax')
         url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=etobicoke')
         url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=north york')
-        url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=yarmouth')
+        url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=yarmouth&province=12&concise=TOWN')
         url_list.append('http://geogratis.gc.ca/services/geoname/en/geonames.json?q=truro')
         return(url_list)
         
@@ -74,6 +74,17 @@ class nrcan_locations:
         provinces = pd.DataFrame(prov_list)
         locations = pd.DataFrame(locations_json)
         df = pd.merge(right = provinces, left = locations, how='left', left_on='province_code', right_on='code')
+        
+        priority_dict = {'MUN1':1,
+                      'CITY':2,
+                      'UTM':3,
+                      'LTM':4,
+                      'TOWN':5}
+        
+        
+        df['priority'] = df['concise'].map(priority_dict)
+        df['priority'] = df['priority'].fillna(6)
+        
         return(df)
     
 if __name__ == "__main__":
@@ -82,7 +93,7 @@ if __name__ == "__main__":
     nrcan_setup = sc.scrape(direc)  
     logger = nrcan_setup.scrape_logger('nrcan.log')
     connection = nrcan_setup.scrape_database('database.json',logger,work=False)
-    ins = sc.insert(direc) 
+    ins = sc.insert(direc,csv_path = r'/home/grant/Documents/test/canada.csv') 
     #request the location data
     nrcan = nrcan_locations(url = 'http://geogratis.gc.ca/services/geoname/en/codes/province.json')
     prov_list = nrcan.geo_provinces()
@@ -91,6 +102,7 @@ if __name__ == "__main__":
     canada = nrcan.canada_dataframe(locations_json,prov_list)
     #insert to database
     ins.insert_database(canada,'nrcan_locations',logger,connection,insert_type = 'replace')
-    
+    ins.insert_csv(canada,logger)
+    connection.close()
   
 #%% 

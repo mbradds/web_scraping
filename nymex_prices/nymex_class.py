@@ -55,7 +55,7 @@ class scrape:
         try:
             engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % params)
             connection=engine.connect()
-            logger.info('connected to database ',exc_info=True)
+            logger.info('connected to database')
             return(connection)
         except:
             logger.info('error with database connection ',exc_info=True)
@@ -69,7 +69,7 @@ class scrape:
                 options = Options()
                 options.headless = headless
                 driver = webdriver.Firefox(options=options, executable_path=driver_path)
-                logger.info('successfully created the web driver ',exc_info=True)
+                logger.info('successfully created the web driver')
                 return(driver)
             except:
                 logger.info('error creating the firefox web scraper ',exc_info=True)
@@ -100,12 +100,46 @@ def brackets(text,l,r):
         return('')
         
 #function to return all of the scraped data that is not in the database
-def return_not_in_csv(df1, df2):
-    # data types need to be the same between dataframes
-    intersected_df = pd.merge(df1, df2, how='right', indicator=True) 
-    intersected_df = intersected_df[intersected_df['_merge']=='right_only']
-    intersected_df = intersected_df.drop('_merge',1)
-    return(intersected_df)
+        
+def return_not_in_csv(logger,df1, df2):
+        
+    if len(df1.columns) != len(df2.columns):
+        logger.info('scraped df and csv/db have different number of columns',exc_info=True)
+            
+        #this try block attempts to correct any differences in data types between stored and scraped dataframes
+    try:
+            
+        for x in df1.columns:
+            if x not in df2.columns:
+                logger.info('scraped df and csv/db have different column names')
+                    
+            if df1[x].dtypes != df2[x].dtypes:
+                logger.info('csv/db and scraped df have different column types')
+                df1[x] = df1[x].astype(df2[x].dtypes)
+    
+            else:
+                None #datatype is the same
+    except:
+        logger.info('error automatically changing datatypes for scraped df and saved df ',exc_info=True)
+        raise
+        
+        #once the types are the same, then merge them and get anything not in csv or db
+    try:
+        intersected_df = pd.merge(df1, df2, how='right', indicator=True) 
+        intersected_df = intersected_df[intersected_df['_merge']=='right_only']
+        intersected_df = intersected_df.drop('_merge',1)
+        return(intersected_df)
+          
+    except:
+        logger.info('couldnt merge the csv/db and scraped df', exc_info=True)
+        raise
+
+#def return_not_in_csv(df1, df2):
+#    # data types need to be the same between dataframes
+#    intersected_df = pd.merge(df1, df2, how='right', indicator=True) 
+#    intersected_df = intersected_df[intersected_df['_merge']=='right_only']
+#    intersected_df = intersected_df.drop('_merge',1)
+#    return(intersected_df)
 
 #gather all of the drop down options. These options need to be formatted to use as a selection
 def nymex_options(url,driver,date_id = 'cmeTradeDate'):
@@ -169,6 +203,7 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
             df['Settlement'] = brackets(str(key),'(',')')
             data.append(df)
             rows_added = str(df.shape[0])
+            df.columns = df.columns.droplevel(level=1)
             logger.info('scraped df: '+str(key)+' '+str(rows_added)+' rows')
             
     except:
@@ -176,14 +211,15 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
     
     #TODO: the np.nan's should be changed to pd.to_numeric, but this function isnt working!
     try:
+        return(df)
         df = pd.concat(data, axis=0, sort=False, ignore_index=True)
         df['Trade Date'] = df['Trade Date'].astype('datetime64[ns]')
-        df['Open'] = np.nan
-        df['High'] = np.nan
-        df['Low'] = np.nan
-        df['Last'] = np.nan
-        df['Settle'] = np.nan
-        df['Change'] = np.nan
+        df['Open'] = pd.to_numeric(df['Open'], errors='coerce')
+        df['High'] = pd.to_numeric(df['High'], errors='coerce')
+        df['Low'] = pd.to_numeric(df['Low'], errors='coerce')
+        df['Last'] = pd.to_numeric(df['Last'], errors='coerce')
+        df['Settle'] = pd.to_numeric(df['Settle'], errors='coerce')
+        df['Change'] = pd.to_numeric(df['Change'], errors='coerce')
         df['Month'] = ['JUL'+d[3:] if d[:3]=='JLY' else d for d in df['Month']]
         #add underscore to month so that csv will not change the format
         df['Month'] = [m.replace(' ','_') for m in df['Month']]
@@ -196,13 +232,13 @@ def nymex_scrape(date_dict,driver,date_id = 'cmeTradeDate'):
 
 #%%
 #insert new data to csv
-def insert_csv(df, csv_path):
+def insert_csv(df, csv_path,logger):
     #get everything into the csv
     if os.path.isfile(csv_path):
         #if file exists, then append all the new data
         df_csv = pd.read_csv(csv_path)
         df_csv['Trade Date'] = df_csv['Trade Date'].astype('datetime64[ns]')
-        not_in_csv = return_not_in_csv(df1=df_csv,df2=df)
+        not_in_csv = return_not_in_csv(logger,df1=df_csv,df2=df)
         
         if not not_in_csv.empty:
         
@@ -245,7 +281,7 @@ def insert_database(df,connection):
     
 #%%    
 # main   
-data_file = 'nymex.csv'
+data_file = r'/home/grant/Documents/data_files/nymex.csv'
 direc = r'/home/grant/Documents/web_scraping/nymex_prices'
 driver_path = r'/home/grant/geckodriver'
 scrape(directory = direc)        
@@ -256,13 +292,16 @@ driver = scrape.scrape_driver(driver_path = driver_path,browser = 'Firefox', hea
 url = 'https://www.cmegroup.com/trading/energy/crude-oil/west-texas-intermediate-wti-crude-oil-calendar-swap-futures_quotes_settlements_futures.html'
 options,driver = nymex_options(url,driver)
 scrape_df = nymex_scrape(options,driver)
+#%%
 try:
-    insert_csv(scrape_df,data_file)
+    insert_csv(scrape_df,data_file,logger)
     insert_database(scrape_df,connection)
-
+    logger.info('added all new data')
 except:
-    logging.info('error adding new data to csv or db')
+    logger.info('error adding new data to csv or db',exc_info = True)
     
 finally:
     driver.close()
     connection.close()
+
+#%%

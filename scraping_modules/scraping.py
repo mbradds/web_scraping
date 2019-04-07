@@ -167,6 +167,8 @@ class insert:
     #functions for inserting to csv/db
     def insert_csv(self,df_scrape,logger, df_csv = None, verify_data=False):
         #get everything into the csv
+        #a custon save location can be specified when scrape is instantiated
+                
         if os.path.isfile(self.csv_path):
             
             if verify_data:

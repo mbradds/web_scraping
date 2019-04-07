@@ -12,11 +12,7 @@ import json
 import sys
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #custom module for setting up scraper
-module_path = r'/home/grant/Documents/web_scraping/scraping_modules'
-if module_path not in sys.path:
-    sys.path.insert(0,module_path)
-
-import scraping as sc
+from Documents.web_scraping.scraping_modules import scraping as sc
 #%%   
         
 def login(driver,email,pword):
@@ -139,16 +135,16 @@ def dob_dataframe(all_links,driver,logger):
     
     
 #%%    
-if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
+if __name__ == "__main__" and datetime.now().date().weekday() not in [""]:
     
-    data_file = 'dob.csv'
+    data_file = r'/home/grant/Documents/data_files/dob.csv'
     direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
     driver_path = r'/home/grant/geckodriver'
     dob = sc.scrape(direc)  
     logger = dob.scrape_logger('dob.log')
     driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = True)
     #connection = dob.scrape_database('database.json',logger)
-    config_file = dob.config_file('database.json',logger)
+    config_file = dob.config_file('database.json')
     email = config_file[0]['dob_email']
     password = config_file[0]['dob_password']
     ins = sc.insert(direc, csv_path = data_file)   
@@ -176,5 +172,3 @@ if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
         driver.close()
 
 #%%
-         
-        
