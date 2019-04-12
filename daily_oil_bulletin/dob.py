@@ -12,7 +12,7 @@ import json
 import sys
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #custom module for setting up scraper
-from Documents.web_scraping.scraping_modules import scraping as sc
+from web_scraping.scraping_modules import scraping as sc
 #%%   
         
 def login(driver,email,pword):
@@ -135,19 +135,22 @@ def dob_dataframe(all_links,driver,logger):
     
     
 #%%    
-if __name__ == "__main__" and datetime.now().date().weekday() not in [""]:
+if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
     
+    #TODO: import the paths from a json file
+    #TODO: only scrape links that dont exist in the saved data!
     data_file = r'/home/grant/Documents/data_files/dob.csv'
-    direc = r'/home/grant/Documents/web_scraping/daily_oil_bulletin'
-    driver_path = r'/home/grant/geckodriver'
+    direc = r'C:\Users\mossgrant\web_scraping\daily_oil_bulletin'
+    driver_path = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe'
     dob = sc.scrape(direc)  
     logger = dob.scrape_logger('dob.log')
-    driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Firefox', headless = True)
+    logger.setLevel(logging.INFO)
     #connection = dob.scrape_database('database.json',logger)
     config_file = dob.config_file('database.json')
     email = config_file[0]['dob_email']
     password = config_file[0]['dob_password']
     ins = sc.insert(direc, csv_path = data_file)   
+    driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Chrome', headless = False)
     
     try:
         df_saved = ins.return_saved_csv()
@@ -155,7 +158,7 @@ if __name__ == "__main__" and datetime.now().date().weekday() not in [""]:
             saved_length = len(df_saved)
         else:
             saved_length = 0
-            
+        
         driver = login(driver,email = email, pword = password)
         if saved_length == 0:
             dates = date_list()
@@ -167,8 +170,9 @@ if __name__ == "__main__" and datetime.now().date().weekday() not in [""]:
         oil = dob_dataframe(links,driver,logger)
         ins.insert_csv(oil,logger,verify_data=verify)
     except:
-        None 
+        driver.close()
     finally:
         driver.close()
+        logging.shutdown()
 
 #%%

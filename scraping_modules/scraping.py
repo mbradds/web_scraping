@@ -19,14 +19,14 @@ class scrape:
         self.directory = directory
         os.chdir(str(directory))
     
-    def scrape_logger(self,logger_name):
+    def scrape_logger(self,logger_name,level):
         
         try:
             name = logger_name.replace('.log','')
             logger = logging.getLogger(name)
             if not logger.handlers:
                 logger.propagate = False
-                logger.setLevel(logging.INFO)
+                #logger.setLevel(logging.INFO)
                 handler = logging.FileHandler(logger_name)
                 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
                 handler.setFormatter(formatter)
