@@ -19,7 +19,7 @@ class scrape:
         self.directory = directory
         os.chdir(str(directory))
     
-    def scrape_logger(self,logger_name,level):
+    def scrape_logger(self,logger_name):
         
         try:
             name = logger_name.replace('.log','')
@@ -35,6 +35,7 @@ class scrape:
             return(logger)
         except:
             raise
+    
     
     def scrape_database(self,config_file,logger,work=False):
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))

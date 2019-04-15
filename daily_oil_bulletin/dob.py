@@ -92,6 +92,7 @@ def date_list(date_text='2018-07-06'):
 
     return(date_list)
 #%%    
+#TODO: change the data structure to a dictionary, with the key as the date. This can be used to raise a critical error if the scrape fails on a weekday
 def link_list(date_list, test = False):
     replace_list = ['YYYY','MM','DD']
     all_links = []
@@ -133,26 +134,24 @@ def dob_dataframe(all_links,driver,logger):
     df.rename(columns={'Unnamed: 1':'Price','Unnamed: 2':'Units'},inplace = True)
     return(df)
     
-    
 #%%    
 if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
     
-    #TODO: import the paths from a json file
-    #TODO: only scrape links that dont exist in the saved data!
-    data_file = r'/home/grant/Documents/data_files/dob.csv'
     direc = r'C:\Users\mossgrant\web_scraping\daily_oil_bulletin'
-    driver_path = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe'
-    dob = sc.scrape(direc)  
+    dob = sc.scrape(direc)
+    
+    config_file = dob.config_file('database.json')[0]['work'][0]
+    driver_path = config_file['driver_file']
+    email = config_file['dob_email']
+    password = config_file['dob_password']
+    data_file = config_file['data_file']
+    
     logger = dob.scrape_logger('dob.log')
-    logger.setLevel(logging.INFO)
-    #connection = dob.scrape_database('database.json',logger)
-    config_file = dob.config_file('database.json')
-    email = config_file[0]['dob_email']
-    password = config_file[0]['dob_password']
+    logger.setLevel(logging.DEBUG)
     ins = sc.insert(direc, csv_path = data_file)   
-    driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Chrome', headless = False)
     
     try:
+        driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Chrome', headless = False)
         df_saved = ins.return_saved_csv()
         if df_saved != None:
             saved_length = len(df_saved)
