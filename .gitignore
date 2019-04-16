@@ -1,5 +1,6 @@
 *.pyo
 *.pyc
+__pycache__
 *.json
 *.log
 *.sql

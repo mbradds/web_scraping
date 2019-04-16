@@ -11,7 +11,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 module_path_work = r'C:\Users\mossgrant\web_scraping\scraping_modules'
 
 #relative import from web_scraping folder. Note: and __init__.py is needed in the scraping_modules folder for this to work
-from web_scraping.scraping_modules import scraping as sc
+from Documents.web_scraping.scraping_modules import scraping as sc
 
 #%%
 #exclude furnace oil for now. These lists contain the structure of the kent website
