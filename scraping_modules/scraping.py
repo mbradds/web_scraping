@@ -68,7 +68,7 @@ class scrape:
             try:
                 with open(os.path.join(__location__,config_file)) as f:
                     config = json.load(f)
-                    conn_str = config[0]['conn_sting']
+                    conn_str = config[0]['conn_string']
                     engine = create_engine(conn_str,echo=False)
                     connection=engine.connect()
                     logger.info('connected to work database')

@@ -208,10 +208,10 @@ def gather_prices(link_structure,logger,connection,insert_obj,verify):
 #%%
 if __name__ == "__main__":
 
-    direc = r'C:\Users\mossgrant\web_scraping\kent_gasoline_prices'
+    direc = r'/home/grant/Documents/web_scraping/kent_gasoline_prices'
     kent = sc.scrape(direc)  
-    logger = kent.scrape_logger('kent.log')
-    connection = kent.scrape_database('database.json',logger,work=True)
+    logger = kent.scrape_logger('kent_prices.log')
+    connection = kent.scrape_database('database.json',logger,work=False)
     ins = sc.insert(direc) 
          
     product_list = ['Unleaded','Midgrade','Premium','Diesel']
@@ -225,6 +225,8 @@ if __name__ == "__main__":
     database = ins.return_saved_table('kent',logger,connection)
     scraped_years =  database['Year'].unique()
     
+    #TODO: could make the verification faster by only verifying the data against its appropriate year.
+    #for example, if the year is 2019, query 2019 and only check against this, instead of all the data
     if len(scraped_years) == 0:
         year_list = gather_years()
         verify_data=False
