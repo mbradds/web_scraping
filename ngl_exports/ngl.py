@@ -8,14 +8,29 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from sqlalchemy import text
+import os
+from os.path import abspath, dirname
+import json
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
-params = urllib.parse.quote_plus(r'DRIVER={SQL Server Native Client 11.0};SERVER=pSQL22CAP;DATABASE=EnergyData;Trusted_Connection=yes')
+params = urllib.parse.quote_plus(r'ENTER or IMPORT connection string')
 conn_str = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
 engine = create_engine(conn_str)
 conn = engine.connect()
 meta = sqlalchemy.MetaData(conn)
 #%%
+
+
+def config_file(name):
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
+        
+    try:
+        with open(os.path.join(__location__,name)) as f:
+            config = json.load(f)
+            conn_str = config[0]['conn_string']
+            return(conn_str)
+    except:
+        raise
 
 def transport_mode(date_list,browser,data,selection):
     for p,e in enumerate(date_list):
@@ -176,3 +191,6 @@ if __name__ == "__main__":
     main(tables,conn)
     
     conn.close()
+#%%
+    
+conn_str = config_file('work_connection.json')    
