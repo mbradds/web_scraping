@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pandas as pd
 import os
 import re
@@ -75,7 +74,7 @@ def get_table(link,driver):
 #%%
 #returns a list that can be added added into the links
 #TODO: add mindate parameter. if csv is empty, mindate is 2018-07-06 otherwise, it is the max of the date column
-def date_list(date_text='2018-07-06'):
+def date_list(date_text='2019-01-01'):
     min_date = datetime.strptime(date_text, '%Y-%m-%d').date()
     today = datetime.now().date()
     end_date = today - timedelta(days=1) #lag the scraper by one day
@@ -153,6 +152,7 @@ if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
     try:
         driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Chrome', headless = False)
         df_saved = ins.return_saved_csv()
+    
         if df_saved != None:
             saved_length = len(df_saved)
         else:

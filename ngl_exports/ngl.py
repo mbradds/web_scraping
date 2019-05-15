@@ -9,21 +9,12 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from sqlalchemy import text
 import os
-from os.path import abspath, dirname
 import json
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-
-params = urllib.parse.quote_plus(r'ENTER or IMPORT connection string')
-conn_str = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
-engine = create_engine(conn_str)
-conn = engine.connect()
-meta = sqlalchemy.MetaData(conn)
 #%%
-
-
 def config_file(name):
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
-        
+    print(os.path.join(__location__,name))
     try:
         with open(os.path.join(__location__,name)) as f:
             config = json.load(f)
@@ -31,11 +22,11 @@ def config_file(name):
             return(conn_str)
     except:
         raise
-
+#%%
 def transport_mode(date_list,browser,data,selection):
     for p,e in enumerate(date_list):
         if p+1 != len(date_list):
-            #from_select = date_list[p+1]+' '+'AM'
+            
             from_select = date_list[p]+' '+'AM' #the from and to month need to be the same!
             to_select = date_list[p]+' '+'AM'
             select_from = Select(browser.find_element_by_id('ctl00_MainContent_searchCriteria_ddlFrom'))
@@ -51,8 +42,6 @@ def transport_mode(date_list,browser,data,selection):
             #correct the dates
             df_from = datetime.datetime.strptime(date_list[p], '%d/%m/%Y %H:%M:%S') - timedelta(hours=12)
             df_to = datetime.datetime.strptime(date_list[p], '%d/%m/%Y %H:%M:%S') - timedelta(hours=12)
-            #df['From'] = date_list[p+1]
-            #df['To'] = date_list[p]
             df['From'] = df_from
             df['To'] = df_to
             df = pd.melt(df,id_vars=['From','To','Units: m³ at 15ºC'],var_name='Region',value_name='Volume')
@@ -172,10 +161,18 @@ def main(tables,conn):
         
         neb_ngl(url,sql_table,conn)
         
-
 #%% 
     
 if __name__ == "__main__":
+    
+    
+    raw_str = config_file('connection.json') 
+    params = urllib.parse.quote_plus(raw_str)
+    conn_str = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
+    engine = create_engine(conn_str)
+    conn = engine.connect()
+    meta = sqlalchemy.MetaData(conn)
+    
     
     tables = [
             {"url":'https://apps.neb-one.gc.ca/CommodityStatistics/ExportVolumeByTransportModeSummary.aspx?commodityCode=PR',
@@ -189,8 +186,5 @@ if __name__ == "__main__":
              ]
     
     main(tables,conn)
-    
     conn.close()
 #%%
-    
-conn_str = config_file('work_connection.json')    
