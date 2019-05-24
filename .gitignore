@@ -5,5 +5,6 @@ __pycache__
 *.log
 *.sql
 *.ipynb
+*.csv
 kent.csv
 !create_table_kent.sql

@@ -11,8 +11,7 @@ import pandas as pd
 #TODO: raise errors when database/logger/drivers do not properly connect
 #TODO: Use class inheritance from example: https://github.com/Pierian-Data/Complete-Python-3-Bootcamp/blob/master/15-Advanced%20OOP/01-Advanced%20Object%20Oriented%20Programming.ipynb
 #raising errors should replace alot of the logging below
-#TODO: errors aernt being raised properly. look into how to properly throw errors
-#use a class to iniate the database, driver and logger for scraping
+
 class scrape:
     
     def __init__(self,directory):
@@ -26,12 +25,11 @@ class scrape:
             logger = logging.getLogger(name)
             if not logger.handlers:
                 logger.propagate = False
-                #logger.setLevel(logging.INFO)
+                logger.setLevel(logging.INFO)
                 handler = logging.FileHandler(logger_name)
                 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
-            logger.info('created the logger')
             return(logger)
         except:
             raise
@@ -141,10 +139,9 @@ class insert:
             
             for x in df1.columns:
                 if x not in df2.columns:
-                    logger.info('scraped df and csv/db have different column names')
+                    None # scraped data and saved data have the same type
                     
                 if df1[x].dtypes != df2[x].dtypes:
-                    logger.info('csv/db and scraped df have different column types')
                     df1[x] = df1[x].astype(df2[x].dtypes)
     
                 else:
@@ -192,7 +189,6 @@ class insert:
             #if the file does not exists, then save it and wait for the next day
             df_scrape.to_csv(self.csv_path, header=True,index=False)
             logger.info('first scrape/insert. Added '+str(len(df_scrape))+' rows to csv')
-        return(None)
     
     #TODO: add a parameter to either append or replace data depending on the situation.
     #check if there is new data, if so, then replace, etc
@@ -225,9 +221,9 @@ class insert:
     def return_saved_csv(self):
         
         if os.path.isfile(self.csv_path):
-            with open(self.csv_path, 'r') as f:
-                df_csv = pd.read_csv(f)
-                return(df_csv)
+            
+            df_csv = pd.read_csv(self.csv_path)
+            return(df_csv)
         else:
             return(None)
             #raise Exception('No File')
