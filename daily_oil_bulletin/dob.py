@@ -100,10 +100,15 @@ def date_list(date_text='2019-01-01',existing_df=None):
         existing_dates = [datetime.strptime(d,'%Y-%m-%d').date() for d in existing_dates]
         set1 = set(existing_dates)
         set2 = set(date_list)
-        return(list(set2-set1))
+        
+        #remove known holidays
+        remaining_dates = set2 - set1
+        holidays = ['2019-04-19','2019-02-18','2019-01-01','2019-05-20']
+        holidays = set([datetime.strptime(d,'%Y-%m-%d').date() for d in holidays])
+        return(list(remaining_dates - holidays))
         
     
-def link_list(date_list, test = False):
+def link_list(date_list, df_saved,test = False):
     replace_list = ['YYYY','MM','DD']
     all_links = []
     for date in date_list:
@@ -112,12 +117,18 @@ def link_list(date_list, test = False):
         for old, new in zip(replace_list,d):
             base_link = base_link.replace(old,new)
         all_links.append(base_link)
-
+    
+    #added redundency. If the url already exists in the data, then disregard it
+    
+    link_set_existing = set(list(df_saved['url']))
+    link_set = set(all_links)
+    
     if test:
         return(all_links[:5])
     else:
-        return(all_links)
-
+        #return(all_links)
+        return(list(link_set - link_set_existing))
+        
 def cast_types(df):
     df['Close Last Trade Day'] = df['Close Last Trade Day'].astype('object')
     df['Units'] = df['Units'].astype('object')
@@ -128,7 +139,7 @@ def cast_types(df):
     
 
 #take the list of links and pass them to the get_table function
-def dob_dataframe(all_links,driver,logger,mode,data_file):
+def dob_dataframe(all_links,driver,logger,mode,head,data_file):
     oil_data = []
     for link in all_links:
         try:
@@ -151,21 +162,21 @@ def dob_dataframe(all_links,driver,logger,mode,data_file):
     
     try:
         df = pd.concat(oil_data, axis=0, sort=False, ignore_index=True)
-        df.to_csv(data_file,mode = mode,index=False)
+        df.to_csv(data_file,mode = mode,index=False,header=head)
         logger.info('successfully added all new days')
     except:
         logger.info('failed to add new days of data')
 
 def main():
     #gather login and file info
-    direc = r'C:\Users\mossgrant\web_scraping\daily_oil_bulletin'
+    direc = r'enter_path_to_working_directory'
     dob = sc.scrape(direc)
     
     config_file = dob.config_file('database.json')[0]['work'][0]
-    driver_path = config_file['driver_file']
-    email = config_file['dob_email']
-    password = config_file['dob_password']
-    data_file = config_file['data_file']
+    driver_path = config_file['driver_file'] #enter path to chromedriver
+    email = config_file['dob_email'] #enter string email, or get it from json file
+    password = config_file['dob_password'] #enter string password, or get it from json file
+    data_file = config_file['data_file'] #enter name of csv file ('dov.csv')
     logger = dob.scrape_logger('dob.log')
     
     #get saved data
@@ -179,19 +190,21 @@ def main():
     
         if saved_length == 0:
             dates = date_list(existing_df = pd.DataFrame())
-            mode = 'w'
+            mode,head = 'w',True
+    
         else:
             dates = date_list(existing_df = df_saved)
-            mode = 'a'
+            mode,head = 'a',False
+            
     except:
         raise
-    
+
     #scrape new data
     try:
         driver = dob.scrape_driver(driver_path = driver_path,logger = logger, browser = 'Chrome', headless = False)
         driver = login(driver,email, password)
-        links = link_list(dates,test = False)
-        dob_dataframe(links,driver,logger,mode,data_file)
+        links = link_list(dates,df_saved,test = False)
+        dob_dataframe(links,driver,logger,mode,head,data_file)
 
     except:
         driver.close()
@@ -202,9 +215,7 @@ def main():
     
 
 #%%    
-if __name__ == "__main__" and datetime.now().date().weekday() not in [5,6]:
+if __name__ == "__main__":# and datetime.now().date().weekday() not in [5,6]:
     main()
-    
+
 #%%
-
-
