@@ -64,25 +64,39 @@ def get_links(df):
         
     return(links)
 
-def wait(driver,delay,x_path,message='failed'):
+def wait(driver,delay,txt,txt_type = 'xpath',message='failed'):
     try:
-        myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.name,x_path)))
-        driver.find_element_by_name(x_path).click()
+        if txt_type == 'name':
+            myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.NAME,txt)))
+            driver.find_element_by_name(txt).click()
+        elif txt_type == 'xpath':
+            myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.XPATH,txt)))
+            driver.find_element_by_xpath(txt).click()
+        elif txt_type == 'id':
+            myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.ID,txt)))
+            driver.find_element_by_id(txt).click()
+            
         return(driver)
     except:
-        print(x_path+' '+message)
+        print(txt+' '+message)
+        raise
 
 def pull_data(links,driver):
-    links = [links[0]] #for testing
-    
+    #links = links[:2] #for testing
     for link in links:
-        driver.get(link)
-        driver.find_element_by_id('xlsDownload').click()
-        time.sleep(5)
-        driver = wait(driver,5,"format")
-        python_button = driver.find_elements_by_name("format")[-1]
-        python_button.click()
-        time.sleep(5)
+        
+        try:
+            driver.get(link)
+            time.sleep(2)
+            driver = wait(driver,5,"//*[@id='selectAll']",txt_type='xpath')
+            time.sleep(2)
+            driver = wait(driver,5,"//*[@id='xlsDownload']",txt_type='xpath')
+            time.sleep(2)
+            driver = wait(driver,5,"//*[@id='submitcustomreport'][@value='Export .CSV']",txt_type='xpath')
+            time.sleep(5)
+        except:
+            print('cant get data for: '+str(link))
+            continue
         
 #%%
 driver_path = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe' 
@@ -95,6 +109,7 @@ links = get_links(df)
 pull_data(links,driver)
 driver.close()
 
+#%%
 
 
 
