@@ -40,6 +40,15 @@ def get_data(url='https://www.crudemonitor.ca/tools/quickReference.php'):
     except:
         raise
 
+def file_names(df):
+    
+    file_names = list(df['Acronym'].unique())
+    
+    for i in range(len(file_names)):
+        file_names[i] = file_names[i]+'.CSV'
+    
+    return(file_names)
+
 def get_file(name):
         
     if os.path.isfile(name):
@@ -54,17 +63,20 @@ def get_file(name):
     return(df)
 
 def get_links(df):
+    
     links = []
     base_link = 'https://www.crudemonitor.ca/crudes/index.php?acr=ACRONYM'
     
     for row in df.iterrows():
         acr = row[1]['Acronym']
         link = base_link.replace('ACRONYM',acr)
+        #TODO: add file name here, so that the data will only be retrieved if it is not already in the folder!
         links.append(link)
         
     return(links)
 
 def wait(driver,delay,txt,txt_type = 'xpath',message='failed'):
+    
     try:
         if txt_type == 'name':
             myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.NAME,txt)))
@@ -93,25 +105,38 @@ def pull_data(links,driver):
             driver = wait(driver,5,"//*[@id='xlsDownload']",txt_type='xpath')
             time.sleep(2)
             driver = wait(driver,5,"//*[@id='submitcustomreport'][@value='Export .CSV']",txt_type='xpath')
-            time.sleep(5)
+            time.sleep(2)
         except:
             print('cant get data for: '+str(link))
             continue
+#TODO: combine files, and only scrape if the data file is not already in the current working directoy...
+#TODO: condensate is not being scraped, because the acronym isnt included! Add extra acronyms to the list!!!
+def combine_files(df):
+    
+    names = file_names(df)
+    
+    df_list = []
+    for file in names:
+        df = pd.read_csv(file)
+        df_list.append(df)
+        
+    combine = pd.concat(df_list,axis=0,sort=False,ignore_index=True)
+    combine.to_csv('crude_monitor.csv',index=False)
+    
         
 #%%
 driver_path = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe' 
 download_path = r'F:\bucom\Energy Trade Team\Grant\crude_monitor'       
-driver = scrape_driver(driver_path = driver_path,download_path = download_path)
+#driver = scrape_driver(driver_path = driver_path,download_path = download_path)
 #%%
 df = get_file('whole_crude_analysis.csv')
 links = get_links(df)
 #%%
-pull_data(links,driver)
-driver.close()
+#pull_data(links,driver)
+#driver.close()
 
 #%%
-
-
+combine_files(df)
 
 
 
