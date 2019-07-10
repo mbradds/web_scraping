@@ -62,16 +62,28 @@ def get_file(name):
         print('scraped and saved file')
     return(df)
 
-def get_links(df):
+def get_links(df,extra_grades):
     
     links = []
-    base_link = 'https://www.crudemonitor.ca/crudes/index.php?acr=ACRONYM'
+    base_link = 'https://www.crudemonitor.ca/TYPE/index.php?acr=ACRONYM'
     
-    for row in df.iterrows():
-        acr = row[1]['Acronym']
-        link = base_link.replace('ACRONYM',acr)
+    acronym = list(df['Acronym'].unique())
+    
+    for grade in extra_grades:
+        acronym.append(grade)
+    
+    
+    for acr in acronym:
+        
+        if acr in ['CHN','CRW','CFT','CPR','CPM','CRL','SLD']:
+            link = base_link.replace('TYPE','condensates')
+        else:
+            link = base_link.replace('TYPE','crudes')
+        
+        link = link.replace('ACRONYM',acr)
+        file = acr+'.CSV'
         #TODO: add file name here, so that the data will only be retrieved if it is not already in the folder!
-        links.append(link)
+        links.append([file,link,acr])
         
     return(links)
 
@@ -93,50 +105,74 @@ def wait(driver,delay,txt,txt_type = 'xpath',message='failed'):
         print(txt+' '+message)
         raise
 
+def website(link,driver):
+    
+    try:
+        driver.get(link)
+        time.sleep(2)
+        driver = wait(driver,5,"//*[@id='selectAll']",txt_type='xpath')
+        time.sleep(2)
+        driver = wait(driver,5,"//*[@id='xlsDownload']",txt_type='xpath')
+        time.sleep(2)
+        driver = wait(driver,5,"//*[@id='submitcustomreport'][@value='Export .CSV']",txt_type='xpath')
+        time.sleep(2)
+    except:
+        print('cant get data for: '+str(link))
+
+
 def pull_data(links,driver):
     #links = links[:2] #for testing
-    for link in links:
+    
+    for l in links:
         
-        try:
-            driver.get(link)
-            time.sleep(2)
-            driver = wait(driver,5,"//*[@id='selectAll']",txt_type='xpath')
-            time.sleep(2)
-            driver = wait(driver,5,"//*[@id='xlsDownload']",txt_type='xpath')
-            time.sleep(2)
-            driver = wait(driver,5,"//*[@id='submitcustomreport'][@value='Export .CSV']",txt_type='xpath')
-            time.sleep(2)
-        except:
-            print('cant get data for: '+str(link))
-            continue
+        file,link = l[0],l[1]
+        
+        if os.path.isfile(file):
+            None #file is already scraped
+        else:
+            website(link,driver)
+            print('scrape file: '+file)
+            
 #TODO: combine files, and only scrape if the data file is not already in the current working directoy...
 #TODO: condensate is not being scraped, because the acronym isnt included! Add extra acronyms to the list!!!
-def combine_files(df):
+def combine_files(links):
     
-    names = file_names(df)
     
-    df_list = []
-    for file in names:
-        df = pd.read_csv(file)
-        df_list.append(df)
+    crude_list = []
+    condensate_list = []
+    
+    for f in links:
+        file,acr = f[0],f[2]
+        try:
+            df = pd.read_csv(file)
+            if acr in ['CHN','CRW','CFT','CPR','CPM','CRL','SLD']:
+                condensate_list.append(df)
+            else:
+                crude_list.append(df)
+        except:
+            print('cant read: '+str(file))
+            
         
-    combine = pd.concat(df_list,axis=0,sort=False,ignore_index=True)
-    combine.to_csv('crude_monitor.csv',index=False)
+    crude = pd.concat(crude_list,axis=0,sort=False,ignore_index=True)
+    condensate = pd.concat(condensate_list,axis=0,sort=False,ignore_index=True)
+    crude.to_csv('crudes.csv',index=False)
+    condensate.to_csv('condensate.csv',index=False)
     
         
 #%%
 driver_path = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe' 
 download_path = r'F:\bucom\Energy Trade Team\Grant\crude_monitor'       
-#driver = scrape_driver(driver_path = driver_path,download_path = download_path)
+driver = scrape_driver(driver_path = driver_path,download_path = download_path)
 #%%
 df = get_file('whole_crude_analysis.csv')
-links = get_links(df)
+extra_grades = ['CHN','CRW','CFT','CPR','CPM','CRL','SLD'] #add in extra crude grades that are not in the 'default' file
+links = get_links(df,extra_grades)
 #%%
-#pull_data(links,driver)
-#driver.close()
+pull_data(links,driver)
+driver.close()
 
 #%%
-combine_files(df)
+combine_files(links)
 
 
 
