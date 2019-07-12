@@ -7,10 +7,12 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import logging
 import time
+import json
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #custom module for setting up scraper
 from web_scraping.scraping_modules import scraping as sc
-#%%    
+#%%  
+  
 def login(driver,email,pword):
     
     username = email
