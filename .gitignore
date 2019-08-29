@@ -8,3 +8,4 @@ __pycache__
 *.csv
 kent.csv
 !create_table_kent.sql
+*.pdf
