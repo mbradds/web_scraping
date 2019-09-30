@@ -106,7 +106,7 @@ def find_cutoff(sql_table,conn,date_col='From'):
 
 
 def neb_ngl(url,sql_table,conn):
-    chromepath = r'C:\Users\mossgrant\Jupyter\Scrape\chromedriver.exe'
+    chromepath = r'C:\Users\mossgran\Documents\chromedriver.exe'
     browser = webdriver.Chrome(executable_path=chromepath)
     #chromeOptions = webdriver.ChromeOptions()
     #browser = webdriver.Chrome(options=chromeOptions)    
